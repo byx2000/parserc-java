@@ -1,15 +1,19 @@
 package byx.parserc;
 
-public class ParseResult<T> {
-    private final Cursor remain;
+public class ParseResult<T, E> {
+    private final Cursor<E> remain;
     private final T result;
 
-    public ParseResult(Cursor remain, T result) {
+    private ParseResult(Cursor<E> remain, T result) {
         this.remain = remain;
         this.result = result;
     }
 
-    public Cursor getRemain() {
+    public static <T, E> ParseResult<T, E> of(Cursor<E> remain, T result) {
+        return new ParseResult<>(remain, result);
+    }
+
+    public Cursor<E> getRemain() {
         return remain;
     }
 
@@ -19,6 +23,7 @@ public class ParseResult<T> {
 
     @Override
     public String toString() {
-        return String.format("ParseResult{result=%s, remain=%s}", result, remain);
+        return String.format("ParseResult{result=%s, remain=%s}",
+                result.toString(), remain.toString());
     }
 }
