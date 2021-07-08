@@ -1,9 +1,27 @@
 package byx.parserc;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+/**
+ * Parser工厂类
+ *
+ * @author byx
+ */
 public class Parsers {
+    public static <T, E> Parser<T, E> value(T val) {
+        return cursor -> ParseResult.of(cursor, val);
+    }
+
+    /**
+     * 匹配一个元素
+     *
+     * @param predicate 条件
+     * @param <E> 元素类型
+     * @return 匹配的元素
+     */
     public static <E> Parser<E, E> one(Predicate<E> predicate) {
         return cursor -> {
             if (cursor.end()) {
@@ -17,7 +35,7 @@ public class Parsers {
         };
     }
 
-    public static <E> Parser<E, E> eq(E item) {
+    public static <E> Parser<E, E> one(E item) {
         return one(cur -> cur.equals(item));
     }
 
@@ -25,8 +43,18 @@ public class Parsers {
         return one(items::contains);
     }
 
+    @SafeVarargs
+    public static <E> Parser<E, E> oneOf(E... items) {
+        return oneOf(Arrays.stream(items).collect(Collectors.toSet()));
+    }
+
     public static <E> Parser<E, E> noneOf(Set<E> items) {
         return one(cur -> !items.contains(cur));
+    }
+
+    @SafeVarargs
+    public static <E> Parser<E, E> noneOf(E... items) {
+        return noneOf(Arrays.stream(items).collect(Collectors.toSet()));
     }
 
     public static <T, E> Parser<T, E> empty() {
