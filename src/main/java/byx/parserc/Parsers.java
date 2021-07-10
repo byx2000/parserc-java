@@ -112,4 +112,8 @@ public class Parsers {
             return ParseResult.of(cursor, results);
         };
     }
+
+    public static <T, E> Parser<List<T>, E> zeroOrMore(Parser<T, E> parser) {
+        return repeat(parser, 0, -1);
+    }
 }
