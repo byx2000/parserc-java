@@ -1,6 +1,8 @@
 package byx.parserc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -11,10 +13,6 @@ import java.util.stream.Collectors;
  * @author byx
  */
 public class Parsers {
-    public static <T, E> Parser<T, E> value(T val) {
-        return cursor -> ParseResult.of(cursor, val);
-    }
-
     /**
      * 匹配一个元素
      *
@@ -85,6 +83,33 @@ public class Parsers {
             } catch (ParseException e) {
                 return rhs.parse(cursor);
             }
+        };
+    }
+
+    public static <T, E> Parser<List<T>, E> repeat(Parser<T, E> parser, int min, int max) {
+        return cursor -> {
+            int cnt = 0;
+            List<T> results = new ArrayList<>();
+
+            // 最少min次
+            while (cnt != min) {
+                ParseResult<T, E> r = parser.parse(cursor);
+                results.add(r.getResult());
+                cursor = r.getRemain();
+                cnt++;
+            }
+
+            // 最多max次
+            try {
+                while (cnt != max) {
+                    ParseResult<T, E> r = parser.parse(cursor);
+                    results.add(r.getResult());
+                    cursor = r.getRemain();
+                    cnt++;
+                }
+            } catch (ParseException ignored) {}
+
+            return ParseResult.of(cursor, results);
         };
     }
 }
