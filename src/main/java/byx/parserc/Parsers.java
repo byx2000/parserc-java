@@ -116,4 +116,8 @@ public class Parsers {
     public static <T, E> Parser<List<T>, E> zeroOrMore(Parser<T, E> parser) {
         return repeat(parser, 0, -1);
     }
+
+    public static <T, E> Parser<List<T>, E> oneOrMore(Parser<T, E> parser) {
+        return repeat(parser, 1, -1);
+    }
 }
