@@ -13,6 +13,7 @@ public class RepeatTest {
     public void test() throws ParseException {
         Parser<List<Character>, Character> p = repeat(one('a'), 3, 5);
 
+        assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("")));
         assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("xyz")));
         assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("axyz")));
         assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("aaxyz")));

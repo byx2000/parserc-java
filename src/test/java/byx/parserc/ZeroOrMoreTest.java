@@ -13,7 +13,12 @@ public class ZeroOrMoreTest {
     @Test
     public void test() throws ParseException {
         Parser<List<Character>, Character> p = zeroOrMore(one('a'));
-        ParseResult<List<Character>, Character> r = p.parse(new StringInputCursor("xyz"));
+
+        ParseResult<List<Character>, Character> r = p.parse(new StringInputCursor(""));
+        assertEquals(Collections.emptyList(), r.getResult());
+        assertEquals("", r.getRemain().toString());
+
+        r = p.parse(new StringInputCursor("xyz"));
         assertEquals(Collections.emptyList(), r.getResult());
         assertEquals("xyz", r.getRemain().toString());
 
