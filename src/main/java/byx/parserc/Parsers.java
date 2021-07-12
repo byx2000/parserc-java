@@ -56,6 +56,10 @@ public class Parsers {
         return noneOf(Arrays.stream(items).collect(Collectors.toSet()));
     }
 
+    public static Parser<Character, Character> range(char c1, char c2) {
+        return one(c -> (c - c1) * (c - c2) <= 0);
+    }
+
     public static <T, E> Parser<T, E> empty() {
         return cursor -> ParseResult.of(cursor, null);
     }
