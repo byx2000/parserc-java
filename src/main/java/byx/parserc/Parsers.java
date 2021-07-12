@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -119,5 +120,12 @@ public class Parsers {
 
     public static <T, E> Parser<List<T>, E> oneOrMore(Parser<T, E> parser) {
         return repeat(parser, 1, -1);
+    }
+
+    public static <T, U, E> Parser<U, E> map(Parser<T, E> parser, Function<T, U> mapper) {
+        return cursor -> {
+            ParseResult<T, E> r = parser.parse(cursor);
+            return ParseResult.of(r.getRemain(), mapper.apply(r.getResult()));
+        };
     }
 }
