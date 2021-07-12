@@ -12,7 +12,7 @@ import static byx.parserc.Parsers.*;
 public class OneOrMoreTest {
     @Test
     public void test() throws ParseException {
-        Parser<List<Character>, Character> p = oneOrMore(one('a'));
+        Parser<List<Character>, Character> p = one('a').oneOrMore();
 
         assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("")));
         assertThrows(ParseException.class, () -> p.parse(new StringInputCursor("x")));

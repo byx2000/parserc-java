@@ -12,7 +12,7 @@ import static byx.parserc.Parsers.*;
 public class ZeroOrMoreTest {
     @Test
     public void test() throws ParseException {
-        Parser<List<Character>, Character> p = zeroOrMore(one('a'));
+        Parser<List<Character>, Character> p = one('a').zeroOrMore();
 
         ParseResult<List<Character>, Character> r = p.parse(new StringInputCursor(""));
         assertEquals(Collections.emptyList(), r.getResult());
