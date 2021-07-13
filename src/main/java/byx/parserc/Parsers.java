@@ -132,4 +132,24 @@ public class Parsers {
             return ParseResult.of(r.getRemain(), mapper.apply(r.getResult()));
         };
     }
+
+    public static <T, U, E> Parser<U, E> skipFirst(Parser<T, E> lhs, Parser<U, E> rhs) {
+        return concat(lhs, rhs).map(Pair::getSecond);
+    }
+
+    public static class SkipWrapper<T, E> {
+        private final Parser<T, E> parser;
+
+        private SkipWrapper(Parser<T, E> parser) {
+            this.parser = parser;
+        }
+
+        public <U> Parser<U, E> concat(Parser<U, E> rhs) {
+            return Parsers.skipFirst(parser, rhs);
+        }
+    }
+
+    public static <T, U, E> SkipWrapper<T, E> skip(Parser<T, E> lhs) {
+        return new SkipWrapper<>(lhs);
+    }
 }
