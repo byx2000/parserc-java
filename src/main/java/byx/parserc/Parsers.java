@@ -137,6 +137,10 @@ public class Parsers {
         return concat(lhs, rhs).map(Pair::getSecond);
     }
 
+    public static <T, U, E> Parser<T, E> skipSecond(Parser<T, E> lhs, Parser<U, E> rhs) {
+        return concat(lhs, rhs).map(Pair::getFirst);
+    }
+
     public static class SkipWrapper<T, E> {
         private final Parser<T, E> parser;
 

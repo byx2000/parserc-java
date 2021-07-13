@@ -25,4 +25,8 @@ public interface Parser<T, E> {
     default <U> Parser<U, E> map(Function<T, U> mapper) {
         return Parsers.map(this, mapper);
     }
+
+    default <U> Parser<T, E> skip(Parser<U, E> rhs) {
+        return Parsers.skipSecond(this, rhs);
+    }
 }
