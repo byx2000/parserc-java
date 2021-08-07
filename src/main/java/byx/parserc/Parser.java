@@ -14,6 +14,10 @@ public interface Parser<T, E> {
         return Parsers.or(this, rhs);
     }
 
+    default Parser<T, E> end() {
+        return Parsers.skipSecond(this, Parsers.end());
+    }
+
     default Parser<List<T>, E> zeroOrMore() {
         return Parsers.zeroOrMore(this);
     }
