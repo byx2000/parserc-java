@@ -56,6 +56,32 @@ public class Parsers {
         return noneOf(Arrays.stream(items).collect(Collectors.toSet()));
     }
 
+    public static Parser<String, Character> literal(String prefix, boolean caseSensitive) {
+        return cursor -> {
+            for (int i = 0; i < prefix.length(); ++i) {
+                if (cursor.end()) {
+                    throw new ParseException(cursor);
+                }
+                char c1 = prefix.charAt(i), c2 = cursor.current();
+                if (caseSensitive) {
+                    if (c1 != c2) {
+                        throw new ParseException(cursor);
+                    }
+                } else {
+                    if (Character.toLowerCase(c1) != Character.toLowerCase(c2)) {
+                        throw new ParseException(cursor);
+                    }
+                }
+                cursor = cursor.next();
+            }
+            return ParseResult.of(cursor, prefix);
+        };
+    }
+
+    public static Parser<String, Character> literal(String prefix) {
+        return literal(prefix, true);
+    }
+
     public static Parser<Character, Character> range(char c1, char c2) {
         return one(c -> (c - c1) * (c - c2) <= 0);
     }
@@ -159,12 +185,17 @@ public class Parsers {
 
     public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser, U value) {
         return cursor -> {
-            ParseResult<T, E> result = parser.parse(cursor);
-            return ParseResult.of(result.getRemain(), value);
+            return ParseResult.of(parser.parse(cursor).getRemain(), value);
         };
     }
 
     public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser) {
         return ignore(parser, null);
+    }
+
+    public static <T, E> Parser<T, E> peek(Parser<T, E> parser) {
+        return cursor -> {
+            return ParseResult.of(cursor, parser.parse(cursor).getResult());
+        };
     }
 }
