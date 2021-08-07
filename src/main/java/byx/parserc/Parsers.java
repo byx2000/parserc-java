@@ -186,9 +186,7 @@ public class Parsers {
     }
 
     public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser, U value) {
-        return cursor -> {
-            return ParseResult.of(parser.parse(cursor).getRemain(), value);
-        };
+        return cursor -> ParseResult.of(parser.parse(cursor).getRemain(), value);
     }
 
     public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser) {
@@ -196,8 +194,6 @@ public class Parsers {
     }
 
     public static <T, E> Parser<T, E> peek(Parser<T, E> parser) {
-        return cursor -> {
-            return ParseResult.of(cursor, parser.parse(cursor).getResult());
-        };
+        return cursor -> ParseResult.of(cursor, parser.parse(cursor).getResult());
     }
 }
