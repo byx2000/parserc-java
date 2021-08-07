@@ -29,4 +29,12 @@ public interface Parser<T, E> {
     default <U> Parser<T, E> skip(Parser<U, E> rhs) {
         return Parsers.skipSecond(this, rhs);
     }
+
+    default <U> Parser<U, E> ignore(U value) {
+        return Parsers.ignore(this, value);
+    }
+
+    default <U> Parser<U, E> ignore() {
+        return Parsers.ignore(this);
+    }
 }

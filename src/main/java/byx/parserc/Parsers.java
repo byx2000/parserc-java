@@ -153,7 +153,18 @@ public class Parsers {
         }
     }
 
-    public static <T, U, E> SkipWrapper<T, E> skip(Parser<T, E> lhs) {
+    public static <T, E> SkipWrapper<T, E> skip(Parser<T, E> lhs) {
         return new SkipWrapper<>(lhs);
+    }
+
+    public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser, U value) {
+        return cursor -> {
+            ParseResult<T, E> result = parser.parse(cursor);
+            return ParseResult.of(result.getRemain(), value);
+        };
+    }
+
+    public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser) {
+        return ignore(parser, null);
     }
 }
