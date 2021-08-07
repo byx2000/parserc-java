@@ -58,6 +58,7 @@ public class Parsers {
 
     public static Parser<String, Character> literal(String prefix, boolean caseSensitive) {
         return cursor -> {
+            StringBuilder resultBuilder = new StringBuilder();
             for (int i = 0; i < prefix.length(); ++i) {
                 if (cursor.end()) {
                     throw new ParseException(cursor);
@@ -72,9 +73,10 @@ public class Parsers {
                         throw new ParseException(cursor);
                     }
                 }
+                resultBuilder.append(c2);
                 cursor = cursor.next();
             }
-            return ParseResult.of(cursor, prefix);
+            return ParseResult.of(cursor, resultBuilder.toString());
         };
     }
 
