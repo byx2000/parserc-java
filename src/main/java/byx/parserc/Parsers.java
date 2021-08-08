@@ -88,8 +88,12 @@ public class Parsers {
         return one(c -> (c - c1) * (c - c2) <= 0);
     }
 
+    public static <T, E> Parser<T, E> value(T value) {
+        return cursor -> ParseResult.of(cursor, value);
+    }
+
     public static <T, E> Parser<T, E> empty() {
-        return cursor -> ParseResult.of(cursor, null);
+        return value(null);
     }
 
     public static <T, E> Parser<T, E> end() {
