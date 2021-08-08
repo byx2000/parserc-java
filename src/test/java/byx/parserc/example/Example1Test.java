@@ -10,7 +10,7 @@ import static byx.parserc.Parsers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class ExprTest {
+public class Example1Test {
     @Test
     public void test() throws ParseException {
         Function<Pair<Integer, List<Pair<Character, Integer>>>, Integer> calc = p -> {
