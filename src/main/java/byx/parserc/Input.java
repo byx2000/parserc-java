@@ -4,24 +4,24 @@ package byx.parserc;
  * 封装解析器输入
  */
 public class Input {
-    private final String input;
+    private final String s;
     private final int index;
 
     public Input(String s, int index) {
-        this.input = s;
+        this.s = s;
         this.index = index;
     }
 
     public Input next() {
-        return new Input(input, index + 1);
+        return new Input(s, index + 1);
     }
 
     public boolean end() {
-        return index == input.length();
+        return index == s.length();
     }
 
     public char current() {
-        return input.charAt(index);
+        return s.charAt(index);
     }
 
     public int index() {

@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 
 import static byx.parserc.Parsers.*;
 
+/**
+ * json解析器
+ */
 public class JsonParser {
     private static final Parser<Character> whitespace = oneOf(' ', '\t', '\n', '\r');
     private static final Parser<String> digit = range('0', '9').map(Objects::toString);
