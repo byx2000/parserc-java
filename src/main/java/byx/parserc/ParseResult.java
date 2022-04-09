@@ -1,29 +1,29 @@
 package byx.parserc;
 
-public class ParseResult<T, E> {
-    private final Cursor<E> remain;
-    private final T result;
+/**
+ * 封装解析结果
+ * @param <R> 解析结果类型
+ */
+public class ParseResult<R> {
+    /**
+     * 解析结果
+     */
+    private final R result;
+    /**
+     * 剩余输入
+     */
+    private final Input remain;
 
-    private ParseResult(Cursor<E> remain, T result) {
-        this.remain = remain;
+    public ParseResult(R result, Input remain) {
         this.result = result;
+        this.remain = remain;
     }
 
-    public static <T, E> ParseResult<T, E> of(Cursor<E> remain, T result) {
-        return new ParseResult<>(remain, result);
-    }
-
-    public Cursor<E> getRemain() {
-        return remain;
-    }
-
-    public T getResult() {
+    public R getResult() {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return String.format("ParseResult{result=%s, remain=%s}",
-                result.toString(), remain.toString());
+    public Input getRemain() {
+        return remain;
     }
 }

@@ -6,198 +6,172 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static byx.parserc.FunctionalInterfaces.*;
+
 /**
- * Parser工厂类
- *
- * @author byx
+ * 常用解析器的静态工厂
  */
 public class Parsers {
-    /**
-     * 匹配一个元素
-     *
-     * @param predicate 条件
-     * @param <E> 元素类型
-     * @return 匹配的元素
-     */
-    public static <E> Parser<E, E> one(Predicate<E> predicate) {
-        return cursor -> {
-            if (cursor.end()) {
-                throw new ParseException(cursor);
+    public static Parser<Character> satisfy(Predicate<Character> predicate) {
+        return input -> {
+            if (input.end()) {
+                throw new ParseException(input, "unexpected end of input");
             }
-            E e = cursor.current();
-            if (!predicate.test(e)) {
-                throw new ParseException(cursor);
+            char c = input.current();
+            if (!predicate.test(c)) {
+                throw new ParseException(input, "unexpected character: " + c);
             }
-            return ParseResult.of(cursor.next(), e);
+            return new ParseResult<>(c, input.next());
         };
     }
 
-    public static <E> Parser<E, E> one(E item) {
-        return one(cur -> cur.equals(item));
+    public static Parser<Character> ch(char c) {
+        return satisfy(ch -> ch == c);
     }
 
-    public static <E> Parser<E, E> oneOf(Set<E> items) {
-        return one(items::contains);
+    public static Parser<Character> range(char c1, char c2) {
+        return satisfy(c -> (c - c1) * (c - c2) <= 0);
     }
 
-    @SafeVarargs
-    public static <E> Parser<E, E> oneOf(E... items) {
-        return oneOf(Arrays.stream(items).collect(Collectors.toSet()));
+    public static Parser<Character> oneOf(Character... chs) {
+        Set<Character> set = Arrays.stream(chs).collect(Collectors.toSet());
+        return satisfy(set::contains);
     }
 
-    public static <E> Parser<E, E> noneOf(Set<E> items) {
-        return one(cur -> !items.contains(cur));
+    public static Parser<Character> not(char c) {
+        return satisfy(ch -> ch != c);
     }
 
-    @SafeVarargs
-    public static <E> Parser<E, E> noneOf(E... items) {
-        return noneOf(Arrays.stream(items).collect(Collectors.toSet()));
-    }
-
-    public static Parser<String, Character> literal(String prefix, boolean caseSensitive) {
-        return cursor -> {
-            StringBuilder resultBuilder = new StringBuilder();
-            for (int i = 0; i < prefix.length(); ++i) {
-                if (cursor.end()) {
-                    throw new ParseException(cursor);
+    public static Parser<String> string(String s) {
+        return input -> {
+            for (int i = 0; i < s.length(); ++i) {
+                if (input.end()) {
+                    throw new ParseException(input, "unexpected end of input");
                 }
-                char c1 = prefix.charAt(i), c2 = cursor.current();
-                if (caseSensitive) {
-                    if (c1 != c2) {
-                        throw new ParseException(cursor);
-                    }
-                } else {
-                    if (Character.toLowerCase(c1) != Character.toLowerCase(c2)) {
-                        throw new ParseException(cursor);
-                    }
+                if (input.current() != s.charAt(i)) {
+                    throw new ParseException(input, "unexpected char: " + input.current());
                 }
-                resultBuilder.append(c2);
-                cursor = cursor.next();
+                input = input.next();
             }
-            return ParseResult.of(cursor, resultBuilder.toString());
+            return new ParseResult<>(s, input);
         };
     }
 
-    public static Parser<String, Character> literal(String prefix) {
-        return literal(prefix, true);
-    }
-
-    public static Parser<Character, Character> range(char c1, char c2) {
-        return one(c -> (c - c1) * (c - c2) <= 0);
-    }
-
-    public static <T, E> Parser<T, E> value(T value) {
-        return cursor -> ParseResult.of(cursor, value);
-    }
-
-    public static <T, E> Parser<T, E> empty() {
-        return value(null);
-    }
-
-    public static <T, E> Parser<T, E> end() {
-        return cursor -> {
-            if (cursor.end()) {
-                return ParseResult.of(cursor, null);
-            }
-            throw new ParseException(cursor);
+    public static <R1, R2> Parser<Pair<R1, R2>> and(Parser<R1> lhs, Parser<R2> rhs) {
+        return input -> {
+            ParseResult<R1> r1 = lhs.parse(input);
+            ParseResult<R2> r2 = rhs.parse(r1.getRemain());
+            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), r2.getRemain());
         };
     }
 
-    public static <T, U, E> Parser<Pair<T, U>, E> concat(Parser<T, E> lhs, Parser<U, E> rhs) {
-        return cursor -> {
-            ParseResult<T, E> r1 = lhs.parse(cursor);
-            ParseResult<U, E> r2 = rhs.parse(r1.getRemain());
-            return ParseResult.of(r2.getRemain(), Pair.of(r1.getResult(), r2.getResult()));
-        };
-    }
-
-    public static <T, E> Parser<T, E> or(Parser<T, E> lhs, Parser<T, E> rhs) {
-        return cursor -> {
+    public static <R> Parser<R> or(Parser<R> lhs, Parser<R> rhs) {
+        return input -> {
             try {
-                return lhs.parse(cursor);
+                return lhs.parse(input);
             } catch (ParseException e) {
-                return rhs.parse(cursor);
+                return rhs.parse(input);
             }
         };
     }
 
-    public static <T, E> Parser<List<T>, E> repeat(Parser<T, E> parser, int min, int max) {
-        return cursor -> {
-            int cnt = 0;
-            List<T> results = new ArrayList<>();
+    @SafeVarargs
+    public static <R> Parser<R> oneOf(Parser<R> p1, Parser<R> p2, Parser<R>... parsers) {
+        return Arrays.stream(parsers).reduce(p1.or(p2), Parser::or);
+    }
 
-            // 最少min次
-            while (cnt != min) {
-                ParseResult<T, E> r = parser.parse(cursor);
-                results.add(r.getResult());
-                cursor = r.getRemain();
-                cnt++;
-            }
+    public static <R1, R2> Parser<R2> map(Parser<R1> p, Function<R1, R2> mapper) {
+        return c -> {
+            ParseResult<R1> r = p.parse(c);
+            return new ParseResult<>(mapper.apply(r.getResult()), r.getRemain());
+        };
+    }
 
-            // 最多max次
+    public static <R1, R2, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Function2<R1, R2, R> mapper) {
+        return p1.and(p2).map(p -> mapper.apply(p.getFirst(), p.getSecond()));
+    }
+
+    public static <R1, R2, R3, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Parser<R3> p3, Function3<R1, R2, R3, R> mapper) {
+        return p1.and(p2).and(p3).map(p -> mapper.apply(p.getFirst().getFirst(), p.getFirst().getSecond(), p.getSecond()));
+    }
+
+    public static <R> Parser<List<R>> many(Parser<R> p) {
+        return c -> {
+            List<R> result = new ArrayList<>();
             try {
-                while (cnt != max) {
-                    ParseResult<T, E> r = parser.parse(cursor);
-                    results.add(r.getResult());
-                    cursor = r.getRemain();
-                    cnt++;
+                while (true) {
+                    ParseResult<R> r = p.parse(c);
+                    result.add(r.getResult());
+                    c = r.getRemain();
                 }
-            } catch (ParseException ignored) {}
-
-            return ParseResult.of(cursor, results);
+            } catch (ParseException e) {
+                return new ParseResult<>(result, c);
+            }
         };
     }
 
-    public static <T, E> Parser<List<T>, E> zeroOrMore(Parser<T, E> parser) {
-        return repeat(parser, 0, -1);
+    public static <R> Parser<List<R>> many1(Parser<R> p) {
+        return p.and(p.many()).map(r -> {
+            List<R> result = new ArrayList<>();
+            result.add(r.getFirst());
+            result.addAll(r.getSecond());
+            return result;
+        });
     }
 
-    public static <T, E> Parser<List<T>, E> oneOrMore(Parser<T, E> parser) {
-        return repeat(parser, 1, -1);
+    public static <R> Parser<R> lazy(Supplier<Parser<R>> supplier) {
+        return c -> supplier.get().parse(c);
     }
 
-    public static <T, U, E> Parser<U, E> map(Parser<T, E> parser, Function<T, U> mapper) {
-        return cursor -> {
-            ParseResult<T, E> r = parser.parse(cursor);
-            return ParseResult.of(r.getRemain(), mapper.apply(r.getResult()));
+    interface SeparateParser<D, R> extends Parser<Pair<R, List<Pair<D, R>>>> {
+        Parser<List<R>> ignoreDelimiter();
+    }
+
+    public static <D, R> SeparateParser<D, R> separateBy(Parser<D> delimiter, Parser<R> parser) {
+        Parser<Pair<R, List<Pair<D, R>>>> p1 = parser.and(delimiter.and(parser).many());
+        Parser<List<R>> p2 = parser.and(skip(delimiter).and(parser).many()).map(p -> {
+            List<R> result = new ArrayList<>();
+            result.add(p.getFirst());
+            result.addAll(p.getSecond());
+            return result;
+        });
+        return new SeparateParser<>() {
+            @Override
+            public Parser<List<R>> ignoreDelimiter() {
+                return p2;
+            }
+
+            @Override
+            public ParseResult<Pair<R, List<Pair<D, R>>>> parse(Input input) throws ParseException {
+                return p1.parse(input);
+            }
         };
     }
 
-    public static <T, U, E> Parser<U, E> skipFirst(Parser<T, E> lhs, Parser<U, E> rhs) {
-        return concat(lhs, rhs).map(Pair::getSecond);
+    public static <R1, R2> Parser<R2> skipFirst(Parser<R1> lhs, Parser<R2> rhs) {
+        return lhs.and(rhs).map(Pair::getSecond);
     }
 
-    public static <T, U, E> Parser<T, E> skipSecond(Parser<T, E> lhs, Parser<U, E> rhs) {
-        return concat(lhs, rhs).map(Pair::getFirst);
+    public static <R1, R2> Parser<R1> skipSecond(Parser<R1> lhs, Parser<R2> rhs) {
+        return lhs.and(rhs).map(Pair::getFirst);
     }
 
-    public static class SkipWrapper<T, E> {
-        private final Parser<T, E> parser;
+    public static class SkipWrapper<R> {
+        private final Parser<R> lhs;
 
-        private SkipWrapper(Parser<T, E> parser) {
-            this.parser = parser;
+        public SkipWrapper(Parser<R> lhs) {
+            this.lhs = lhs;
         }
 
-        public <U> Parser<U, E> concat(Parser<U, E> rhs) {
-            return Parsers.skipFirst(parser, rhs);
+        public <R2> Parser<R2> and(Parser<R2> rhs) {
+            return skipFirst(lhs, rhs);
         }
     }
 
-    public static <T, E> SkipWrapper<T, E> skip(Parser<T, E> lhs) {
+    public static <R> SkipWrapper<R> skip(Parser<R> lhs) {
         return new SkipWrapper<>(lhs);
-    }
-
-    public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser, U value) {
-        return cursor -> ParseResult.of(parser.parse(cursor).getRemain(), value);
-    }
-
-    public static <T, U, E> Parser<U, E> ignore(Parser<T, E> parser) {
-        return ignore(parser, null);
-    }
-
-    public static <T, E> Parser<T, E> peek(Parser<T, E> parser) {
-        return cursor -> ParseResult.of(cursor, parser.parse(cursor).getResult());
     }
 }

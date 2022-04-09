@@ -3,42 +3,62 @@ package byx.parserc;
 import java.util.List;
 import java.util.function.Function;
 
-public interface Parser<T, E> {
-    ParseResult<T, E> parse(Cursor<E> cursor) throws ParseException;
+/**
+ * 解析器
+ * @param <R> 解析结果类型
+ */
+public interface Parser<R> {
+    /**
+     * 解析输入
+     * @param input 输入
+     * @return 解析结果
+     * @throws ParseException 解析异常
+     */
+    ParseResult<R> parse(Input input) throws ParseException;
 
-    default <U> Parser<Pair<T, U>, E> concat(Parser<U, E> rhs) {
-        return Parsers.concat(this, rhs);
+    /**
+     * 解析字符串
+     * @param s 输入字符串
+     * @return 解析结果
+     * @throws ParseException 解析异常
+     */
+    default R parse(String s) throws ParseException {
+        ParseResult<R> r = parse(new Input(s, 0));
+        if (!r.getRemain().end()) {
+            throw new ParseException(r.getRemain(), "expected end but not");
+        }
+        return r.getResult();
     }
 
-    default Parser<T, E> or(Parser<T, E> rhs) {
+    default <R2> Parser<Pair<R, R2>> and(Parser<R2> rhs) {
+        return Parsers.and(this, rhs);
+    }
+
+    default Parser<R> or(Parser<R> rhs) {
         return Parsers.or(this, rhs);
     }
 
-    default Parser<T, E> end() {
-        return Parsers.skipSecond(this, Parsers.end());
-    }
-
-    default Parser<List<T>, E> zeroOrMore() {
-        return Parsers.zeroOrMore(this);
-    }
-
-    default Parser<List<T>, E> oneOrMore() {
-        return Parsers.oneOrMore(this);
-    }
-
-    default <U> Parser<U, E> map(Function<T, U> mapper) {
+    default <R2> Parser<R2> map(Function<R, R2> mapper) {
         return Parsers.map(this, mapper);
     }
 
-    default <U> Parser<T, E> skip(Parser<U, E> rhs) {
+    default <R2> Parser<R2> mapTo(Class<R2> type) {
+        return this.map(type::cast);
+    }
+
+    default <R2> Parser<R2> transform(Function<Parser<R>, Parser<R2>> transformer) {
+        return transformer.apply(this);
+    }
+
+    default Parser<List<R>> many() {
+        return Parsers.many(this);
+    }
+
+    default Parser<List<R>> many1() {
+        return Parsers.many1(this);
+    }
+
+    default <R2> Parser<R> skip(Parser<R2> rhs) {
         return Parsers.skipSecond(this, rhs);
-    }
-
-    default <U> Parser<U, E> ignore(U value) {
-        return Parsers.ignore(this, value);
-    }
-
-    default <U> Parser<U, E> ignore() {
-        return Parsers.ignore(this);
     }
 }
