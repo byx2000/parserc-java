@@ -46,10 +46,6 @@ public interface Parser<R> {
         return this.map(type::cast);
     }
 
-    default <R2> Parser<R2> transform(Function<Parser<R>, Parser<R2>> transformer) {
-        return transformer.apply(this);
-    }
-
     default Parser<List<R>> many() {
         return Parsers.many(this);
     }
@@ -60,5 +56,13 @@ public interface Parser<R> {
 
     default <R2> Parser<R> skip(Parser<R2> rhs) {
         return Parsers.skipSecond(this, rhs);
+    }
+
+    default Parser<R> surroundBy(Parser<?> begin, Parser<?> end) {
+        return Parsers.skip(begin).and(this).skip(end);
+    }
+
+    default Parser<R> surroundBy(Parser<?> p) {
+        return surroundBy(p, p);
     }
 }

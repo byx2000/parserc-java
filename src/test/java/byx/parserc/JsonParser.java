@@ -12,32 +12,33 @@ import static byx.parserc.Parsers.*;
  * json解析器
  */
 public class JsonParser {
-    private static final Parser<Character> whitespace = chs(' ', '\t', '\n', '\r');
+    private static final Parser<Character> w = chs(' ', '\t', '\n', '\r');
+    private static final Parser<List<Character>> ws = w.many();
     private static final Parser<String> digit = range('0', '9').map(Objects::toString);
     private static final Parser<Integer> integer = digit.many1()
             .map(nums -> Integer.parseInt(join(nums)))
-            .transform(JsonParser::withWhitespace);
+            .surroundBy(ws);
     private static final Parser<Double> decimal = seq(
             digit.many1(),
             ch('.'),
             digit.many1(),
             (a, b, c) -> Double.parseDouble(join(a) + b + join(c))
-    ).transform(JsonParser::withWhitespace);
+    ).surroundBy(ws);
     private static final Parser<String> string = seq(
             ch('"'),
             not('"').many(),
             ch('"'),
             (a, b, c) -> join(b)
-    ).transform(JsonParser::withWhitespace);
+    ).surroundBy(ws);
     private static final Parser<Boolean> bool = strings("true", "false")
             .map(Boolean::parseBoolean)
-            .transform(JsonParser::withWhitespace);
-    private static final Parser<Character> objStart = withWhitespace(ch('{'));
-    private static final Parser<Character> objEnd = withWhitespace(ch('}'));
-    private static final Parser<Character> arrStart = withWhitespace(ch('['));
-    private static final Parser<Character> arrEnd = withWhitespace(ch(']'));
-    private static final Parser<Character> colon = withWhitespace(ch(':'));
-    private static final Parser<Character> comma = withWhitespace(ch(','));
+            .surroundBy(ws);
+    private static final Parser<Character> objStart = ch('{').surroundBy(ws);
+    private static final Parser<Character> objEnd = ch('}').surroundBy(ws);
+    private static final Parser<Character> arrStart = ch('[').surroundBy(ws);
+    private static final Parser<Character> arrEnd = ch(']').surroundBy(ws);
+    private static final Parser<Character> colon = ch(':').surroundBy(ws);
+    private static final Parser<Character> comma = ch(',').surroundBy(ws);
     private static final Parser<List<Object>> emptyArr = seq(arrStart, arrEnd, (a, b) -> Collections.emptyList());
     private static final Parser<List<Object>> arr = seq(
             arrStart,
@@ -65,10 +66,6 @@ public class JsonParser {
             .or(bool.mapTo(Object.class))
             .or(arr.mapTo(Object.class))
             .or(obj.mapTo(Object.class));
-
-    private static <T> Parser<T> withWhitespace(Parser<T> p) {
-        return skip(whitespace.many()).and(p).skip(whitespace.many());
-    }
     
     private static Parser<Object> getJsonObj() {
         return jsonObj;
