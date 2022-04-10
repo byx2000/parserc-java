@@ -18,11 +18,11 @@ public class Parsers {
     public static Parser<Character> satisfy(Predicate<Character> predicate) {
         return input -> {
             if (input.end()) {
-                throw new ParseException(input, "unexpected end of input");
+                throw new ParseException(input);
             }
             char c = input.current();
             if (!predicate.test(c)) {
-                throw new ParseException(input, "unexpected character: " + c);
+                throw new ParseException(input);
             }
             return new ParseResult<>(c, input.next());
         };
@@ -49,10 +49,10 @@ public class Parsers {
         return input -> {
             for (int i = 0; i < s.length(); ++i) {
                 if (input.end()) {
-                    throw new ParseException(input, "unexpected end of input");
+                    throw new ParseException(input);
                 }
                 if (input.current() != s.charAt(i)) {
-                    throw new ParseException(input, "unexpected char: " + input.current());
+                    throw new ParseException(input);
                 }
                 input = input.next();
             }

@@ -27,4 +27,9 @@ public class Input {
     public int index() {
         return index;
     }
+
+    @Override
+    public String toString() {
+        return s.substring(index);
+    }
 }

@@ -25,7 +25,7 @@ public interface Parser<R> {
     default R parse(String s) throws ParseException {
         ParseResult<R> r = parse(new Input(s, 0));
         if (!r.getRemain().end()) {
-            throw new ParseException(r.getRemain(), "expected end but not");
+            throw new ParseException(r.getRemain());
         }
         return r.getResult();
     }
