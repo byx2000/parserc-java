@@ -10,7 +10,8 @@ import static byx.parserc.Parsers.*;
  * 表达式计算器
  */
 public class ExprCalc {
-    private static final Parser<Character> whitespace = oneOf(' ', '\t', '\r', '\n');
+    private static final Parser<Character> wp = chs(' ', '\t', '\r', '\n');
+    private static final Parser<List<Character>> wps = wp.many();
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<Character> dot = withWhitespace(ch('.'));
     private static final Parser<Character> add = withWhitespace(ch('+'));
@@ -30,7 +31,7 @@ public class ExprCalc {
     private static final Parser<Double> expr = separateBy(add.or(sub), term).map(ExprCalc::calc);
 
     private static <T> Parser<T> withWhitespace(Parser<T> p) {
-        return skip(whitespace.many()).and(p).skip(whitespace.many());
+        return skip(wps).and(p).skip(wps);
     }
 
     private static Parser<Double> getFact() {

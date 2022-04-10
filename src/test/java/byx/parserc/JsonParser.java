@@ -12,7 +12,7 @@ import static byx.parserc.Parsers.*;
  * json解析器
  */
 public class JsonParser {
-    private static final Parser<Character> whitespace = oneOf(' ', '\t', '\n', '\r');
+    private static final Parser<Character> whitespace = chs(' ', '\t', '\n', '\r');
     private static final Parser<String> digit = range('0', '9').map(Objects::toString);
     private static final Parser<Integer> integer = digit.many1()
             .map(nums -> Integer.parseInt(join(nums)))
@@ -29,7 +29,7 @@ public class JsonParser {
             ch('"'),
             (a, b, c) -> join(b)
     ).transform(JsonParser::withWhitespace);
-    private static final Parser<Boolean> bool = string("true").or(string("false"))
+    private static final Parser<Boolean> bool = strings("true", "false")
             .map(Boolean::parseBoolean)
             .transform(JsonParser::withWhitespace);
     private static final Parser<Character> objStart = withWhitespace(ch('{'));

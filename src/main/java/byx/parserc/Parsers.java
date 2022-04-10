@@ -36,7 +36,7 @@ public class Parsers {
         return satisfy(c -> (c - c1) * (c - c2) <= 0);
     }
 
-    public static Parser<Character> oneOf(Character... chs) {
+    public static Parser<Character> chs(Character... chs) {
         Set<Character> set = Arrays.stream(chs).collect(Collectors.toSet());
         return satisfy(set::contains);
     }
@@ -58,6 +58,10 @@ public class Parsers {
             }
             return new ParseResult<>(s, input);
         };
+    }
+
+    public static Parser<String> strings(String s1, String s2, String... ss) {
+        return Arrays.stream(ss).reduce(string(s1).or(string(s2)), (p, s) -> p.or(string(s)), Parser::or);
     }
 
     public static <R1, R2> Parser<Pair<R1, R2>> and(Parser<R1> lhs, Parser<R2> rhs) {

@@ -25,5 +25,16 @@ public class BoolExprCalcTest {
         assertFalse(BoolExprCalc.eval("|(f,f)"));
         assertFalse(BoolExprCalc.eval("|(&(t,f,t),!(t))"));
         assertTrue(BoolExprCalc.eval("!(&(!(t),&(f),|(f)))"));
+
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("a"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("ff"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("ft"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("&f,t"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("|(f,t))"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("+(t,f)"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("!(t,t)"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("&(f t)"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&((f),|(f)))"));
+        assertThrows(ParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&(f),|(f))))"));
     }
 }
