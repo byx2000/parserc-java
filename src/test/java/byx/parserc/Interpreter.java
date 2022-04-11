@@ -9,23 +9,54 @@ import static byx.parserc.Parsers.*;
  * 脚本语言解释器
  */
 public class Interpreter {
-    private static class Environment {
-        private final Map<String, Integer> vars = new HashMap<>();
+    public static class InterpretException extends RuntimeException {
+        public InterpretException(String msg) {
+            super(msg);
+        }
+    }
 
-        public boolean varExist(String varName) {
-            return vars.containsKey(varName);
+    private static class Environment {
+        private final LinkedList<Map<String, Integer>> scopes = new LinkedList<>(List.of(new HashMap<>()));
+
+        public void declareVar(String varName, Integer value) {
+            Map<String, Integer> scope = scopes.get(scopes.size() - 1);
+            if (scope.containsKey(varName)) {
+                throw new InterpretException("变量重复定义：" + varName);
+            }
+            scope.put(varName, value);
         }
 
         public void setVar(String varName, Integer value) {
-            vars.put(varName, value);
+            for (int i = scopes.size() - 1; i >= 0; --i) {
+                Map<String, Integer> scope = scopes.get(i);
+                if (scope.containsKey(varName)) {
+                    scope.put(varName, value);
+                    return;
+                }
+            }
+            throw new InterpretException("变量未定义：" + varName);
         }
 
-        public int getVar(String varName) {
-            return vars.get(varName);
+        public Integer getVar(String varName) {
+            for (int i = scopes.size() - 1; i >= 0; --i) {
+                Map<String, Integer> scope = scopes.get(i);
+                if (scope.containsKey(varName)) {
+                    return scope.get(varName);
+                }
+            }
+            throw new InterpretException("变量未定义：" + varName);
         }
 
         public Map<String, Integer> getVars() {
-            return Collections.unmodifiableMap(vars);
+            return Collections.unmodifiableMap(scopes.get(scopes.size() - 1));
+        }
+
+        public void pushScope() {
+            scopes.addLast(new HashMap<>());
+        }
+
+        public void popScope() {
+            scopes.removeLast();
         }
     }
 
@@ -55,9 +86,6 @@ public class Interpreter {
 
         @Override
         public int eval(Environment env) {
-            if (!env.varExist(varName)) {
-                throw new RuntimeException("变量未定义：" + varName);
-            }
             return env.getVar(varName);
         }
     }
@@ -229,10 +257,7 @@ public class Interpreter {
 
         @Override
         public void execute(Environment env) {
-            if (env.varExist(varName)) {
-                throw new RuntimeException("变量重复定义：" + varName);
-            }
-            env.setVar(varName, expr.eval(env));
+            env.declareVar(varName, expr.eval(env));
         }
     }
 
@@ -247,9 +272,6 @@ public class Interpreter {
 
         @Override
         public void execute(Environment env) {
-            if (!env.varExist(varName)) {
-                throw new RuntimeException("变量未定义：" + varName);
-            }
             env.setVar(varName, expr.eval(env));
         }
     }
@@ -263,7 +285,9 @@ public class Interpreter {
 
         @Override
         public void execute(Environment env) {
+            env.pushScope();
             stmts.forEach(s -> s.execute(env));
+            env.popScope();
         }
     }
 
@@ -303,9 +327,11 @@ public class Interpreter {
 
         @Override
         public void execute(Environment env) {
+            env.pushScope();
             for (init.execute(env); cond.eval(env); update.execute(env)) {
                 body.execute(env);
             }
+            env.popScope();
         }
     }
 
