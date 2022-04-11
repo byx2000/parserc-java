@@ -95,11 +95,28 @@ public class Parsers {
     }
 
     public static <R1, R2, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Function2<R1, R2, R> mapper) {
-        return p1.and(p2).map(p -> mapper.apply(p.getFirst(), p.getSecond()));
+        return p1.and(p2)
+                .map(p -> mapper.apply(p.getFirst(), p.getSecond()));
     }
 
     public static <R1, R2, R3, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Parser<R3> p3, Function3<R1, R2, R3, R> mapper) {
-        return p1.and(p2).and(p3).map(p -> mapper.apply(p.getFirst().getFirst(), p.getFirst().getSecond(), p.getSecond()));
+        return p1.and(p2).and(p3)
+                .map(p -> mapper.apply(p.getFirst().getFirst(), p.getFirst().getSecond(), p.getSecond()));
+    }
+
+    public static <R1, R2, R3, R4, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Parser<R3> p3, Parser<R4> p4, Function4<R1, R2, R3, R4, R> mapper) {
+        return p1.and(p2).and(p3).and(p4)
+                .map(p -> mapper.apply(p.getFirst().getFirst().getFirst(), p.getFirst().getFirst().getSecond(), p.getFirst().getSecond(), p.getSecond()));
+    }
+
+    public static <R1, R2, R3, R4, R5, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Parser<R3> p3, Parser<R4> p4, Parser<R5> p5, Function5<R1, R2, R3, R4, R5, R> mapper) {
+        return p1.and(p2).and(p3).and(p4).and(p5)
+                .map(p -> mapper.apply(p.getFirst().getFirst().getFirst().getFirst(), p.getFirst().getFirst().getFirst().getSecond(), p.getFirst().getFirst().getSecond(), p.getFirst().getSecond(), p.getSecond()));
+    }
+
+    public static <R1, R2, R3, R4, R5, R6, R> Parser<R> seq(Parser<R1> p1, Parser<R2> p2, Parser<R3> p3, Parser<R4> p4, Parser<R5> p5, Parser<R6> p6, Function6<R1, R2, R3, R4, R5, R6, R> mapper) {
+        return p1.and(p2).and(p3).and(p4).and(p5).and(p6)
+                .map(p -> mapper.apply(p.getFirst().getFirst().getFirst().getFirst().getFirst(), p.getFirst().getFirst().getFirst().getFirst().getSecond(), p.getFirst().getFirst().getFirst().getSecond(), p.getFirst().getFirst().getSecond(), p.getFirst().getSecond(), p.getSecond()));
     }
 
     public static <R> Parser<List<R>> many(Parser<R> p) {
@@ -124,6 +141,16 @@ public class Parsers {
             result.addAll(r.getSecond());
             return result;
         });
+    }
+
+    public static <R> Parser<R> optional(Parser<R> p) {
+        return input -> {
+            try {
+                return p.parse(input);
+            } catch (ParseException e) {
+                return new ParseResult<>(null, input);
+            }
+        };
     }
 
     public static <R> Parser<R> lazy(Supplier<Parser<R>> supplier) {
