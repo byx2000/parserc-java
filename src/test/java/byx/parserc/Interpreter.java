@@ -391,9 +391,9 @@ public class Interpreter {
             var,
             skip(lp).and(lazy(Interpreter::getArithExpr)).skip(rp)
     );
-    private static final Parser<ArithmeticExpression> arithTerm = separateBy(mul.or(div), arithFact)
+    private static final Parser<ArithmeticExpression> arithTerm = separateBy(mul.or(div).or(rem), arithFact)
             .map(Interpreter::buildArithmeticExpr);
-    private static final Parser<ArithmeticExpression> arithExpr = separateBy(add.or(sub).or(rem), arithTerm)
+    private static final Parser<ArithmeticExpression> arithExpr = separateBy(add.or(sub), arithTerm)
             .map(Interpreter::buildArithmeticExpr);
     private static final Parser<ConditionExpression> compareExpr = seq(
             arithExpr, let.or(lt).or(gt).or(equ), arithExpr,
