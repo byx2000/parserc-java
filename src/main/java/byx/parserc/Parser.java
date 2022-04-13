@@ -2,6 +2,7 @@ package byx.parserc;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * 解析器
@@ -40,6 +41,10 @@ public interface Parser<R> {
 
     default <R2> Parser<R2> map(Function<R, R2> mapper) {
         return Parsers.map(this, mapper);
+    }
+
+    default <R2> Parser<R2> map(Supplier<R2> supplier) {
+        return Parsers.map(this, r -> supplier.get());
     }
 
     default <R2> Parser<R2> mapTo(Class<R2> type) {
