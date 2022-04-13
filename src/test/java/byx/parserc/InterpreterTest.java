@@ -11,6 +11,7 @@ public class InterpreterTest {
     public void test() {
         assertEquals(Map.of("i", 123), Interpreter.interpret("var i = 123"));
         assertEquals(Map.of("i", 10), Interpreter.interpret("var i = (2+3) * 4 / (9-7)"));
+        assertEquals(Map.of("i", 17), Interpreter.interpret("var i = 2 + 3*5"));
         assertEquals(Map.of("i", 101), Interpreter.interpret("var i = 100 i = i + 1"));
         assertEquals(Map.of("i", 456), Interpreter.interpret("var i = 123\ni = 456"));
         assertEquals(Map.of("i", 123, "j", 4567), Interpreter.interpret("var i = 123 var j = 4567"));
