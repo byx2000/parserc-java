@@ -1,4 +1,4 @@
-package byx.parserc;
+package byx.parserc.interpreter;
 
 import org.junit.jupiter.api.Test;
 

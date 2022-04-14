@@ -157,7 +157,7 @@ public class Parsers {
         return c -> supplier.get().parse(c);
     }
 
-    interface SeparateParser<D, R> extends Parser<Pair<R, List<Pair<D, R>>>> {
+    public interface SeparateParser<D, R> extends Parser<Pair<R, List<Pair<D, R>>>> {
         Parser<List<R>> ignoreDelimiter();
     }
 
