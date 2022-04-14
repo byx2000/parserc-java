@@ -72,6 +72,7 @@ public class Interpreter {
     );
     private static final Parser<ConditionExpr> condFact = oneOf(
             compareExpr,
+            skip(lp).and(lazy(Interpreter::getCondExpr)).skip(rp),
             skip(not.and(lp)).and(lazy(Interpreter::getCondExpr)).skip(rp).map(Interpreter::buildNotExpr)
     );
     private static final Parser<ConditionExpr> condTerm = separateBy(and, condFact).map(Interpreter::buildConditionalExpr);

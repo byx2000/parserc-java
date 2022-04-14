@@ -31,5 +31,7 @@ public class InterpreterTest {
         assertEquals(Map.of("s", 349866, "i", 837), Interpreter.run("var s = 0 var i = 0 while (i < 10000) {if (i % 3242 == 837) break s = s + i i = i + 1}"));
         assertEquals(Map.of("s", 277694), Interpreter.run("var s = 0 for (var i = 0; i < 100; i = i + 1){if (i % 6 == 4)continue s = s + i * i}"));
         assertEquals(Map.of("s", 277694, "i", 100), Interpreter.run("var s = 0 var i = 0 while (i < 100){if (i % 6 == 4){i = i + 1 continue} s = s + i * i i = i + 1}"));
+        assertEquals(Map.of("s", 29441), Interpreter.run("var s = 0 for (var i = 0; i < 1000; i = i + 1) if (i % 6 == 1 && (i % 7 == 2 || i % 8 == 3)) s = s + i"));
+        assertEquals(Map.of("s", 71357), Interpreter.run("var s = 0 for (var i = 0; i < 1000; i = i + 1) if (i % 6 == 1 && i % 7 == 2 || i % 8 == 3) s = s + i"));
     }
 }
