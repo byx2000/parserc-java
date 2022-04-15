@@ -4,9 +4,9 @@ import byx.parserc.interpreter.runtime.Environment;
 
 public class VarAssign implements Statement {
     private final String varName;
-    private final ArithmeticExpr expr;
+    private final Expr expr;
 
-    public VarAssign(String varName, ArithmeticExpr expr) {
+    public VarAssign(String varName, Expr expr) {
         this.varName = varName;
         this.expr = expr;
     }

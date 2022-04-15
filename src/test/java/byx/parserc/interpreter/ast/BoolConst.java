@@ -3,15 +3,15 @@ package byx.parserc.interpreter.ast;
 import byx.parserc.interpreter.runtime.Environment;
 import byx.parserc.interpreter.runtime.Value;
 
-public class Var implements Expr {
-    private final String varName;
+public class BoolConst implements Expr {
+    private final boolean value;
 
-    public Var(String varName) {
-        this.varName = varName;
+    public BoolConst(boolean value) {
+        this.value = value;
     }
 
     @Override
     public Value eval(Environment env) {
-        return env.getVar(varName);
+        return Value.of(value);
     }
 }
