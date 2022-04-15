@@ -24,11 +24,9 @@ public class Interpreter {
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<String> digits = digit.many1().map(Interpreter::join);
     private static final Parser<Character> underline = ch('_');
-    private static final Parser<String> identifier = seq(
-            oneOf(alpha, underline),
-            oneOf(digit, alpha, underline).many(),
-            (a, b) -> a + join(b)
-    ).surroundBy(ws);
+    private static final Parser<String> identifier = oneOf(alpha, underline).and(oneOf(digit, alpha, underline).many())
+            .map(p -> p.getFirst() + join(p.getSecond()))
+            .surroundBy(ws);
     private static final Parser<String> integer = digits.surroundBy(ws);
     private static final Parser<String> decimal = seq(digits, ch('.'), digits, (a, b, c) -> a + b + c).surroundBy(ws);
     private static final Parser<String> string = skip(ch('\'')).and(not('\'').many()).skip(ch('\'')).map(Interpreter::join).surroundBy(ws);
@@ -65,6 +63,7 @@ public class Interpreter {
     private static final Parser<String> return_ = string("return").surroundBy(ws);
 
     private static final Parser<Statement> lazyStmt = lazy(Interpreter::getStmt);
+    private static final Parser<List<Statement>> stmts = lazyStmt.skip(optional(semi)).many1();
     private static final Parser<Expr> lazyExpr = lazy(Interpreter::getExpr);
 
     // 表达式
@@ -76,9 +75,13 @@ public class Interpreter {
     private static final Parser<List<String>> emptyParamList = lp.and(rp).map(Collections::emptyList);
     private static final Parser<List<String>> singleParamList = identifier.map(s -> List.of(s));
     private static final Parser<List<String>> paramList = skip(lp).and(separateBy(comma, identifier).ignoreDelimiter()).skip(rp)
-            .or(singleParamList).or(emptyParamList);
-    private static final Parser<Expr> func = paramList.skip(arrow.and(lb)).and(lazyStmt.many1()).skip(rb).map(p -> (Expr) new FunctionExpr(p.getFirst(), new Block(p.getSecond())))
-            .or(paramList.skip(arrow).and(lazyExpr).map(p -> new FunctionExpr(p.getFirst(), new Return(p.getSecond()))));
+            .or(singleParamList)
+            .or(emptyParamList);
+    private static final Parser<Expr> singleStmtFunc = paramList.skip(arrow).and(lazyExpr)
+            .map(p -> new FunctionExpr(p.getFirst(), new Return(p.getSecond())));
+    private static final Parser<Expr> multiStmtFunc = paramList.skip(arrow.and(lb)).and(stmts).skip(rb)
+            .map(p -> new FunctionExpr(p.getFirst(), new Block(p.getSecond())));
+    private static final Parser<Expr> func = singleStmtFunc.or(multiStmtFunc);
     private static final Parser<List<Expr>> emptyCallList = lp.and(rp).map(Collections::emptyList);
     private static final Parser<List<Expr>> callList = skip(lp).and(separateBy(comma, lazyExpr).ignoreDelimiter()).skip(rp)
             .or(emptyCallList);
@@ -105,23 +108,14 @@ public class Interpreter {
     private static final Parser<Expr> expr = separateBy(or, e4).map(Interpreter::buildExpr);
 
     // 语句
-    private static final Parser<Statement> varDeclareStmt = seq(
-            var_, identifier, assign, expr,
-            (a, b, c, d) -> new VarDeclaration(b, d)
-    );
-    private static final Parser<Statement> varAssignStmt = seq(
-            identifier, assign, expr,
-            (a, b, c) -> new VarAssign(a, c)
-    );
-    private static final Parser<Statement> block = seq(
-            lb, lazyStmt.many1(), rb,
-            (a, b, c) -> new Block(b)
-    );
-    private static final Parser<Statement> ifelse = seq(
-            if_, lp, expr, rp, lazyStmt,
-            optional(seq(else_, lazyStmt, (a, b) -> b)),
-            (a, b, c, d, e, f) -> new IfElse(c, e, f)
-    );
+    private static final Parser<Statement> varDeclareStmt = skip(var_).and(identifier).skip(assign).and(expr)
+            .map(p -> new VarDeclaration(p.getFirst(), p.getSecond()));
+    private static final Parser<Statement> varAssignStmt = identifier.skip(assign).and(expr)
+            .map(p -> new VarAssign(p.getFirst(), p.getSecond()));
+    private static final Parser<Statement> block = skip(lb).and(stmts).skip(rb)
+            .map(Block::new);
+    private static final Parser<Statement> ifelse = skip(if_.and(lp)).and(expr).skip(rp).and(lazyStmt).and(optional(skip(else_).and(lazyStmt)))
+            .map(p -> new IfElse(p.getFirst().getFirst(), p.getFirst().getSecond(), p.getSecond()));
     private static final Parser<Statement> forLoop = skip(for_.and(lp)).and(lazyStmt).skip(semi).and(expr).skip(semi).and(lazyStmt).skip(rp).and(lazyStmt)
             .map(p -> new ForLoop(p.getFirst().getFirst().getFirst(), p.getFirst().getFirst().getSecond(), p.getFirst().getSecond(), p.getSecond()));
     private static final Parser<Statement> whileLoop = skip(while_.and(lp)).and(expr).skip(rp).and(lazyStmt)
@@ -142,7 +136,7 @@ public class Interpreter {
             expr.map(e -> e::eval)
     );
 
-    private static final Parser<Program> program = stmt.many().map(Program::new);
+    private static final Parser<Program> program = stmts.map(Program::new);
 
     private static Parser<Expr> getExpr() {
         return expr;

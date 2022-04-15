@@ -8,6 +8,8 @@ public class Value {
     private final ValueType type;
     private final Object val;
 
+    private static final Value UNDEFINED = new Value(ValueType.Undefined, null);
+
     private Value(ValueType type, Object val) {
         this.type = type;
         this.val = val;
@@ -34,7 +36,7 @@ public class Value {
     }
 
     public static Value undefined() {
-        return new Value(ValueType.Undefined, null);
+        return UNDEFINED;
     }
 
     public ValueType getType() {
