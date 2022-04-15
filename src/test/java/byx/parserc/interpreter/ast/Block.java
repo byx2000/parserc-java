@@ -1,6 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 import java.util.List;
 
@@ -12,12 +12,10 @@ public class Block implements Statement {
     }
 
     @Override
-    public void execute(Environment env) {
-        env.pushScope();
-        try {
-            stmts.forEach(s -> s.execute(env));
-        } finally {
-            env.popScope();
+    public void execute(Scope scope) {
+        scope = new Scope(scope);
+        for (Statement s : stmts) {
+            s.execute(scope);
         }
     }
 }

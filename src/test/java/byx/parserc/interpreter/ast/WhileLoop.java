@@ -2,7 +2,7 @@ package byx.parserc.interpreter.ast;
 
 import byx.parserc.interpreter.runtime.BreakException;
 import byx.parserc.interpreter.runtime.ContinueException;
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 public class WhileLoop implements Statement {
     private final Expr cond;
@@ -14,10 +14,10 @@ public class WhileLoop implements Statement {
     }
 
     @Override
-    public void execute(Environment env) {
-        while (cond.eval(env).getBool()) {
+    public void execute(Scope scope) {
+        while (cond.eval(scope).getBool()) {
             try {
-                body.execute(env);
+                body.execute(scope);
             } catch (BreakException e) {
                 break;
             } catch (ContinueException e) {}

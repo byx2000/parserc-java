@@ -1,6 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 import byx.parserc.interpreter.runtime.Value;
 
 public class DoubleConst implements Expr {
@@ -11,7 +11,7 @@ public class DoubleConst implements Expr {
     }
 
     @Override
-    public Value eval(Environment env) {
+    public Value eval(Scope scope) {
         return Value.of(value);
     }
 }

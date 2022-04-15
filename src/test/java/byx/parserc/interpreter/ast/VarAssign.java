@@ -1,6 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 public class VarAssign implements Statement {
     private final String varName;
@@ -12,7 +12,7 @@ public class VarAssign implements Statement {
     }
 
     @Override
-    public void execute(Environment env) {
-        env.setVar(varName, expr.eval(env));
+    public void execute(Scope scope) {
+        scope.setVar(varName, expr.eval(scope));
     }
 }

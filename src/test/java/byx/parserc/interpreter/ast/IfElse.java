@@ -1,6 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 public class IfElse implements Statement {
     private final Expr cond;
@@ -14,11 +14,11 @@ public class IfElse implements Statement {
     }
 
     @Override
-    public void execute(Environment env) {
-        if (cond.eval(env).getBool()) {
-            trueBranch.execute(env);
+    public void execute(Scope scope) {
+        if (cond.eval(scope).getBool()) {
+            trueBranch.execute(scope);
         } else if (falseBranch != null) {
-            falseBranch.execute(env);
+            falseBranch.execute(scope);
         }
     }
 }

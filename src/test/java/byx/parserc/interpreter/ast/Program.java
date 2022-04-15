@@ -1,6 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 import byx.parserc.interpreter.runtime.Value;
 
 import java.util.List;
@@ -14,10 +14,10 @@ public class Program {
     }
 
     public Map<String, Value> run() {
-        Environment env = new Environment();
+        Scope scope = new Scope();
         for (Statement s : stmts) {
-            s.execute(env);
+            s.execute(scope);
         }
-        return env.getVars();
+        return scope.getVars();
     }
 }

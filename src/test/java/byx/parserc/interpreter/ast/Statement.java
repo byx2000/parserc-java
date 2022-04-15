@@ -1,7 +1,7 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 public interface Statement {
-    void execute(Environment env);
+    void execute(Scope scope);
 }

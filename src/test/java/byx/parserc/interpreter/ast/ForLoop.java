@@ -2,7 +2,7 @@ package byx.parserc.interpreter.ast;
 
 import byx.parserc.interpreter.runtime.BreakException;
 import byx.parserc.interpreter.runtime.ContinueException;
-import byx.parserc.interpreter.runtime.Environment;
+import byx.parserc.interpreter.runtime.Scope;
 
 public class ForLoop implements Statement {
     private final Statement init;
@@ -18,15 +18,14 @@ public class ForLoop implements Statement {
     }
 
     @Override
-    public void execute(Environment env) {
-        env.pushScope();
-        for (init.execute(env); cond.eval(env).getBool(); update.execute(env)) {
+    public void execute(Scope scope) {
+        scope = new Scope(scope);
+        for (init.execute(scope); cond.eval(scope).getBool(); update.execute(scope)) {
             try {
-                body.execute(env);
+                body.execute(scope);
             } catch (BreakException e) {
                 break;
             } catch (ContinueException e) {}
         }
-        env.popScope();
     }
 }
