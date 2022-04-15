@@ -1,8 +1,8 @@
 package byx.parserc.interpreter.runtime;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Scope {
     private final Map<String, Value> vars = new HashMap<>();
@@ -45,6 +45,8 @@ public class Scope {
     }
 
     public Map<String, Value> getVars() {
-        return Collections.unmodifiableMap(vars);
+        return vars.entrySet().stream()
+                .filter(e -> !e.getValue().isFunction())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

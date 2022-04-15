@@ -5,6 +5,7 @@ import byx.parserc.Parser;
 import byx.parserc.interpreter.ast.*;
 import byx.parserc.interpreter.runtime.Value;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +35,7 @@ public class Interpreter {
     private static final Parser<String> bool = string("true").or(string("false")).surroundBy(ws);
     private static final Parser<String> assign = string("=").surroundBy(ws);
     private static final Parser<String> semi = string(";").surroundBy(ws);
+    private static final Parser<String> comma = string(",").surroundBy(ws);
     private static final Parser<String> lp = string("(").surroundBy(ws);
     private static final Parser<String> rp = string(")").surroundBy(ws);
     private static final Parser<String> lb = string("{").surroundBy(ws);
@@ -52,6 +54,7 @@ public class Interpreter {
     private static final Parser<String> and = string("&&").surroundBy(ws);
     private static final Parser<String> or = string("||").surroundBy(ws);
     private static final Parser<String> not = string("!").surroundBy(ws);
+    private static final Parser<String> arrow = string("=>").surroundBy(ws);
     private static final Parser<String> var_ = string("var").surroundBy(ws);
     private static final Parser<String> if_ = string("if").surroundBy(ws);
     private static final Parser<String> else_ = string("else").surroundBy(ws);
@@ -59,6 +62,10 @@ public class Interpreter {
     private static final Parser<String> while_ = string("while").surroundBy(ws);
     private static final Parser<String> break_ = string("break").surroundBy(ws);
     private static final Parser<String> continue_ = string("continue").surroundBy(ws);
+    private static final Parser<String> return_ = string("return").surroundBy(ws);
+
+    private static final Parser<Statement> lazyStmt = lazy(Interpreter::getStmt);
+    private static final Parser<Expr> lazyExpr = lazy(Interpreter::getExpr);
 
     // 表达式
     private static final Parser<Expr> integerConst = integer.map(s -> new IntegerConst(Integer.parseInt(s)));
@@ -66,15 +73,31 @@ public class Interpreter {
     private static final Parser<Expr> stringConst = string.map(StringConst::new);
     private static final Parser<Expr> boolConst = bool.map(s -> new BoolConst(Boolean.parseBoolean(s)));
     private static final Parser<Expr> var = identifier.map(Var::new);
+    private static final Parser<List<String>> emptyParamList = lp.and(rp).map(Collections::emptyList);
+    private static final Parser<List<String>> singleParamList = identifier.map(s -> List.of(s));
+    private static final Parser<List<String>> paramList = skip(lp).and(separateBy(comma, identifier).ignoreDelimiter()).skip(rp)
+            .or(singleParamList).or(emptyParamList);
+    private static final Parser<Expr> func = paramList.skip(arrow.and(lb)).and(lazyStmt.many1()).skip(rb).map(p -> (Expr) new FunctionExpr(p.getFirst(), new Block(p.getSecond())))
+            .or(paramList.skip(arrow).and(lazyExpr).map(p -> new FunctionExpr(p.getFirst(), new Return(p.getSecond()))));
+    private static final Parser<List<Expr>> emptyCallList = lp.and(rp).map(Collections::emptyList);
+    private static final Parser<List<Expr>> callList = skip(lp).and(separateBy(comma, lazyExpr).ignoreDelimiter()).skip(rp)
+            .or(emptyCallList);
     private static final Parser<Expr> e0 = oneOf(
             doubleConst,
             integerConst,
             stringConst,
             boolConst,
+            func,
             var,
-            skip(lp).and(lazy(Interpreter::getExpr)).skip(rp),
-            skip(not).and(lazy(Interpreter::getExpr)).map(Not::new)
-    );
+            skip(lp).and(lazyExpr).skip(rp),
+            skip(not).and(lazyExpr).map(Not::new)
+    ).and(callList.many()).map(p -> {
+        Expr e = p.getFirst();
+        for (List<Expr> callList : p.getSecond()) {
+            e = new Call(e, callList);
+        }
+        return e;
+    });
     private static final Parser<Expr> e1 = separateBy(mul.or(div).or(rem), e0).map(Interpreter::buildExpr);
     private static final Parser<Expr> e2 = separateBy(add.or(sub), e1).map(Interpreter::buildExpr);
     private static final Parser<Expr> e3 = separateBy(let.or(lt).or(get).or(gt).or(equ).or(neq), e2).map(Interpreter::buildExpr);
@@ -82,7 +105,6 @@ public class Interpreter {
     private static final Parser<Expr> expr = separateBy(or, e4).map(Interpreter::buildExpr);
 
     // 语句
-    private static final Parser<Statement> lazyStmt = lazy(Interpreter::getStmt);
     private static final Parser<Statement> varDeclareStmt = seq(
             var_, identifier, assign, expr,
             (a, b, c, d) -> new VarDeclaration(b, d)
@@ -106,6 +128,7 @@ public class Interpreter {
             .map(p -> new WhileLoop(p.getFirst(), p.getSecond()));
     private static final Parser<Statement> breakStmt = break_.map(Break::new);
     private static final Parser<Statement> continueStmt = continue_.map(Continue::new);
+    private static final Parser<Statement> returnStmt = skip(return_).and(expr).map(Return::new);
     private static final Parser<Statement> stmt = oneOf(
             varDeclareStmt,
             varAssignStmt,
@@ -114,7 +137,9 @@ public class Interpreter {
             forLoop,
             whileLoop,
             breakStmt,
-            continueStmt
+            continueStmt,
+            returnStmt,
+            expr.map(e -> e::eval)
     );
 
     private static final Parser<Program> program = stmt.many().map(Program::new);

@@ -1,5 +1,7 @@
 package byx.parserc.interpreter.runtime;
 
+import byx.parserc.interpreter.ast.FunctionValue;
+
 import java.util.Objects;
 
 public class Value {
@@ -25,6 +27,14 @@ public class Value {
 
     public static Value of(String stringVal) {
         return new Value(ValueType.String, stringVal);
+    }
+
+    public static Value of(FunctionValue functionVal) {
+        return new Value(ValueType.Function, functionVal);
+    }
+
+    public static Value undefined() {
+        return new Value(ValueType.Undefined, null);
     }
 
     public ValueType getType() {
@@ -72,6 +82,14 @@ public class Value {
         return type == ValueType.String;
     }
 
+    public boolean isFunction() {
+        return type == ValueType.Function;
+    }
+
+    public boolean isUndefined() {
+        return type == ValueType.Undefined;
+    }
+
     public int getInteger() {
         return (int) val;
     }
@@ -86,5 +104,9 @@ public class Value {
 
     public String getString() {
         return (String) val;
+    }
+
+    public FunctionValue getFunction() {
+        return (FunctionValue) val;
     }
 }

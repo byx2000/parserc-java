@@ -158,5 +158,25 @@ public class InterpreterTest {
         assertEquals(Map.of("s", Value.of("1 2 3 4 5 6 7 8 9 10")), Interpreter.run("var s = '' for (var i = 1; i <= 10; i = i + 1) {if (i != 10) s = s + i + ' ' else s = s + i}"));
         assertEquals(Map.of("s", Value.of("hello".repeat(100))), Interpreter.run("var s = '' for (var i = 0; i < 100; i = i + 1) s = s + 'hello'"));
         assertEquals(Map.of("s", Value.of(5.187377517639621)), Interpreter.run("var s = 0.0 for (var i = 1; i <= 100; i = i + 1) s = s + 1.0 / i"));
+
+        assertEquals(Map.of("x", Value.of(102)), Interpreter.run("var x = 100 var fun = () => {x = x + 1} fun() fun()"));
+        assertEquals(Map.of("x", Value.of(5), "y", Value.of(112)), Interpreter.run("var add = (a) => (b) => a + b var x = add(2)(3) var y = add(45)(67)"));
+        assertEquals(Map.of("x", Value.of(5), "y", Value.of(112)), Interpreter.run("var add = a => b => a + b var x = add(2)(3) var y = add(45)(67)"));
+        assertEquals(Map.of(
+                "a", Value.of(1),
+                "b", Value.of(2),
+                "c", Value.of(3),
+                "d", Value.of(1),
+                "e", Value.of(2),
+                "f", Value.of(3),
+                "x", Value.of(4),
+                "y", Value.of(4)
+        ), Interpreter.run("var counter = () => {var cnt = 0 return () => {cnt = cnt + 1 return cnt}} var c1 = counter() var a = c1() var b = c1() var c = c1() var c2 = counter() var d = c2() var e = c2() var f = c2() var x = c1() var y = c2()"));
+        assertEquals(Map.of("i", Value.of(201)), Interpreter.run("var compose = (n, f, g) => g(f(n)) var f1 = n => n * 2 var f2 = n => n + 1 var i = compose(100, f1, f2)"));
+        assertEquals(Map.of("x", Value.of(123), "y", Value.of(456)), Interpreter.run("var x = 123 var outer = () => {var x = 456 return () => x} var y = outer()()"));
+        assertEquals(Map.of("x", Value.of(100), "y", Value.of(456)), Interpreter.run("var x = 123 var outer = () => {var x = 456 return () => x} x = 100 var y = outer()()"));
+        assertEquals(Map.of("s", Value.of(55)), Interpreter.run("var observer = callback => {for (var i = 1; i <= 10; i = i + 1) callback(i)} var s = 0 observer(n => {s = s + n})"));
+        assertEquals(Map.of("x", Value.of(55)), Interpreter.run("var fib = n => {if (n == 1 || n == 2) return 1 else return fib(n - 1) + fib(n - 2)} var x = fib(10)"));
+        assertEquals(Map.of("x", Value.of(3628800)), Interpreter.run("var factories = n => {if (n == 1) return 1 else return n * factories(n - 1)} var x = factories(10)"));
     }
 }

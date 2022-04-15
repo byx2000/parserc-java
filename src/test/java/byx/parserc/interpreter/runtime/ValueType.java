@@ -4,5 +4,7 @@ public enum ValueType {
     Integer,
     Double,
     Bool,
-    String
+    String,
+    Function,
+    Undefined
 }
