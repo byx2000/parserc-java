@@ -70,4 +70,12 @@ public interface Parser<R> {
     default Parser<R> surroundBy(Parser<?> p) {
         return surroundBy(p, p);
     }
+
+    default Parser<R> optional() {
+        return Parsers.optional(this);
+    }
+
+    default Parser<R> optional(R defaultResult) {
+        return Parsers.optional(this, defaultResult);
+    }
 }

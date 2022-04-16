@@ -6,5 +6,6 @@ public enum ValueType {
     Bool,
     String,
     Function,
+    Object,
     Undefined
 }

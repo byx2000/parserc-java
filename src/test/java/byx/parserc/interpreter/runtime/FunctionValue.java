@@ -1,6 +1,6 @@
-package byx.parserc.interpreter.ast;
+package byx.parserc.interpreter.runtime;
 
-import byx.parserc.interpreter.runtime.Scope;
+import byx.parserc.interpreter.ast.Statement;
 
 import java.util.List;
 

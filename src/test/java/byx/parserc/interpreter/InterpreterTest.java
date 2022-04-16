@@ -4,10 +4,10 @@ import byx.parserc.interpreter.runtime.InterpretException;
 import byx.parserc.interpreter.runtime.Value;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class InterpreterTest {
     @Test
@@ -161,6 +161,7 @@ public class InterpreterTest {
         assertEquals(Map.of("s", Value.of("hello".repeat(100))), Interpreter.run("var s = '' for (var i = 0; i < 100; i = i + 1) s = s + 'hello'"));
         assertEquals(Map.of("s", Value.of(5.187377517639621)), Interpreter.run("var s = 0.0 for (var i = 1; i <= 100; i = i + 1) s = s + 1.0 / i"));
 
+        assertEquals(Map.of("x", Value.of(56088)), Interpreter.run("var fun = (a, b) => 123 * 456 var x = fun()"));
         assertEquals(Map.of("x", Value.of(102)), Interpreter.run("var x = 100 var fun = () => {x = x + 1} fun() fun()"));
         assertEquals(Map.of("x", Value.of(101)), Interpreter.run("var x = 100; (() => {x = x + 1})()"));
         assertEquals(Map.of("x", Value.of(12345)), Interpreter.run("var x = (() => 12345)()"));
@@ -185,5 +186,100 @@ public class InterpreterTest {
         assertEquals(Map.of("x", Value.of(3628800)), Interpreter.run("var factories = n => {if (n == 1) return 1 else return n * factories(n - 1)} var x = factories(10)"));
         assertEquals(Map.of("x", Value.of(300)), Interpreter.run("var func = (a, b) => a + b var x = func(100, 200, 400)"));
         assertThrows(InterpretException.class, () -> Interpreter.run("var func = (a, b, c) => a + b + c var x = func(100, 200)"));
+
+        assertEquals(Map.of(
+                "obj", Value.of(Map.of("a", Value.of(123), "b", Value.of(3.14), "c", Value.of("hello"), "d", Value.of(Map.of("x", Value.of(100), "y", Value.of(200.1))))),
+                "x", Value.of(123),
+                "y", Value.of(3.14),
+                "z", Value.of("hello"),
+                "w", Value.of(Map.of("x", Value.of(100), "y", Value.of(200.1))),
+                "p", Value.of(25)
+        ), Interpreter.run("var obj = {a: 123, b: 3.14, c: 'hello', d: {x: 100, y: 200.1}, method: (a, b) => a + b} var x = obj.a var y = obj.b var z = obj.c var w = obj.d var p = obj.method(12, 13)"));
+
+        Map<String, Value> expect = new HashMap<>();
+        expect.put("a", Value.of(100));
+        expect.put("b", Value.of(101));
+        expect.put("c", Value.of(102));
+        expect.put("d", Value.of(101));
+        expect.put("e", Value.of(100));
+        expect.put("x", Value.of(200));
+        expect.put("y", Value.of(201));
+        expect.put("z", Value.of(202));
+        expect.put("m", Value.of(201));
+        expect.put("p", Value.of(200));
+        expect.put("c1", Value.of(Map.of()));
+        expect.put("c2", Value.of(Map.of()));
+        assertEquals(expect, Interpreter.run(
+                "var counter = init => {\n" +
+                "    var cnt = init\n" +
+                "    return {\n" +
+                "        // 获取当前计数值\n" +
+                "        current: () => cnt,\n" +
+                "        // 计数值+1\n" +
+                "        inc: () => {cnt = cnt + 1},\n" +
+                "        // 计数值-1\n" +
+                "        dec: () => {cnt = cnt - 1}\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "var c1 = counter(100)\n" +
+                "var a = c1.current() // 100\n" +
+                "c1.inc()\n" +
+                "var b = c1.current() // 101\n" +
+                "c1.inc()\n" +
+                "var c = c1.current() // 102\n" +
+                "c1.dec()\n" +
+                "var d = c1.current() // 101\n" +
+                "c1.dec()\n" +
+                "var e = c1.current() // 100\n" +
+                "\n" +
+                "var c2 = counter(200)\n" +
+                "// 200\n" +
+                "var x = c2.current() \n" +
+                "c2.inc()\n" +
+                "// 201\n" +
+                "var y = c2.current()\n" +
+                "c2.inc()\n" +
+                "// 202\n" +
+                "var z = c2.current()\n" +
+                "c2.dec()\n" +
+                "// 201\n" +
+                "var m = c2.current()\n" +
+                "c2.dec()\n" +
+                "// 200\n" +
+                "var p = c2.current()"));
+
+        expect = new HashMap<>();
+        expect.put("s1Name", Value.of("Xiao Ming"));
+        expect.put("s1Age", Value.of(21));
+        expect.put("s1Score", Value.of(87.5));
+        expect.put("s2Name", Value.of("Li Si"));
+        expect.put("s2Age", Value.of(23));
+        expect.put("s2Score", Value.of(95));
+        expect.put("s1", Value.of(Map.of("score", Value.of(87.5))));
+        expect.put("s2", Value.of(Map.of("score", Value.of(95))));
+        assertEquals(expect, Interpreter.run(
+                "var Student = (name, age, score) => {\n" +
+                "    return {\n" +
+                "        getName: () => name,\n" +
+                "        getAge: () => age,\n" +
+                "        score: score,\n" +
+                "        setName: _name => {name = _name},\n" +
+                "        setAge: _age => {age = _age},\n" +
+                "        setScore: _score => {score = _score}\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "var s1 = Student('Zhang San', 21, 87.5)\n" +
+                "var s2 = Student('Li Si', 23, 95)\n" +
+                "s1.setName('Xiao Ming')\n" +
+                "s2.setScore(77.5)\n" +
+                "\n" +
+                "var s1Name = s1.getName()\n" +
+                "var s1Age = s1.getAge()\n" +
+                "var s1Score = s1.score\n" +
+                "var s2Name = s2.getName()\n" +
+                "var s2Age = s2.getAge()\n" +
+                "var s2Score = s2.score"));
     }
 }

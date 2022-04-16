@@ -17,7 +17,7 @@ public class IfElse implements Statement {
     public void execute(Scope scope) {
         if (cond.eval(scope).getBool()) {
             trueBranch.execute(scope);
-        } else if (falseBranch != null) {
+        } else {
             falseBranch.execute(scope);
         }
     }

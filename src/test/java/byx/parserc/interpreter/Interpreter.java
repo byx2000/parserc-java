@@ -18,8 +18,9 @@ import static byx.parserc.Parsers.*;
  */
 public class Interpreter {
     // 词法元素
-    private static final Parser<Character> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<List<Character>> ws = w.many();
+    private static final Parser<String> w = chs(' ', '\t', '\r', '\n').map(Objects::toString);
+    private static final Parser<String> comment = string("//").skip(not('\n').many()).skip(ch('\n'));
+    private static final Parser<?> ws = w.or(comment).many();
     private static final Parser<Character> alpha = range('a', 'z').or(range('A', 'Z'));
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<String> digits = digit.many1().map(Interpreter::join);
@@ -34,6 +35,8 @@ public class Interpreter {
     private static final Parser<String> assign = string("=").surroundBy(ws);
     private static final Parser<String> semi = string(";").surroundBy(ws);
     private static final Parser<String> comma = string(",").surroundBy(ws);
+    private static final Parser<String> colon = string(":").surroundBy(ws);
+    private static final Parser<String> dot = string(".").surroundBy(ws);
     private static final Parser<String> lp = string("(").surroundBy(ws);
     private static final Parser<String> rp = string(")").surroundBy(ws);
     private static final Parser<String> lb = string("{").surroundBy(ws);
@@ -63,7 +66,7 @@ public class Interpreter {
     private static final Parser<String> return_ = string("return").surroundBy(ws);
 
     private static final Parser<Statement> lazyStmt = lazy(Interpreter::getStmt);
-    private static final Parser<List<Statement>> stmts = lazyStmt.skip(optional(semi)).many1();
+    private static final Parser<List<Statement>> stmts = lazyStmt.skip(semi.optional()).many1();
     private static final Parser<Expr> lazyExpr = lazy(Interpreter::getExpr);
 
     // 表达式
@@ -72,19 +75,22 @@ public class Interpreter {
     private static final Parser<Expr> stringConst = string.map(StringConst::new);
     private static final Parser<Expr> boolConst = bool.map(s -> new BoolConst(Boolean.parseBoolean(s)));
     private static final Parser<Expr> var = identifier.map(Var::new);
-    private static final Parser<List<String>> emptyParamList = lp.and(rp).map(Collections::emptyList);
     private static final Parser<List<String>> singleParamList = identifier.map(s -> List.of(s));
-    private static final Parser<List<String>> paramList = skip(lp).and(separateBy(comma, identifier).ignoreDelimiter()).skip(rp)
-            .or(singleParamList)
-            .or(emptyParamList);
+    private static final Parser<List<String>> paramList = skip(lp)
+            .and(separateBy(comma, identifier).ignoreDelimiter().optional(Collections.emptyList()))
+            .skip(rp)
+            .or(singleParamList);
     private static final Parser<Expr> singleStmtFunc = paramList.skip(arrow).and(lazyExpr)
             .map(p -> new FunctionExpr(p.getFirst(), new Return(p.getSecond())));
     private static final Parser<Expr> multiStmtFunc = paramList.skip(arrow.and(lb)).and(stmts).skip(rb)
             .map(p -> new FunctionExpr(p.getFirst(), new Block(p.getSecond())));
     private static final Parser<Expr> func = singleStmtFunc.or(multiStmtFunc);
-    private static final Parser<List<Expr>> emptyCallList = lp.and(rp).map(Collections::emptyList);
-    private static final Parser<List<Expr>> callList = skip(lp).and(separateBy(comma, lazyExpr).ignoreDelimiter()).skip(rp)
-            .or(emptyCallList);
+    private static final Parser<List<Expr>> callList = skip(lp)
+            .and(separateBy(comma, lazyExpr).ignoreDelimiter().optional(Collections.emptyList()))
+            .skip(rp);
+    private static final Parser<Pair<String, Expr>> propPair = identifier.skip(colon).and(lazyExpr);
+    private static final Parser<Expr> obj = skip(lb).and(separateBy(comma, propPair).ignoreDelimiter()).skip(rb)
+            .map(ps -> new ObjectExpr(ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))));
     private static final Parser<Expr> e0 = oneOf(
             doubleConst,
             integerConst,
@@ -92,12 +98,20 @@ public class Interpreter {
             boolConst,
             func,
             var,
+            obj,
             skip(lp).and(lazyExpr).skip(rp),
             skip(not).and(lazyExpr).map(Not::new)
-    ).and(callList.many()).map(p -> {
+    ).and(callList.mapTo(Object.class).or(skip(dot).and(identifier).mapTo(Object.class)).many()).map(p -> {
         Expr e = p.getFirst();
-        for (List<Expr> callList : p.getSecond()) {
-            e = new Call(e, callList);
+        for (Object o : p.getSecond()) {
+            if (o instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Expr> callList = (List<Expr>) o;
+                e = new Call(e, callList);
+            } else if (o instanceof String) {
+                String propName = (String) o;
+                e = new Prop(e, propName);
+            }
         }
         return e;
     });
@@ -114,7 +128,9 @@ public class Interpreter {
             .map(p -> new VarAssign(p.getFirst(), p.getSecond()));
     private static final Parser<Statement> block = skip(lb).and(stmts).skip(rb)
             .map(Block::new);
-    private static final Parser<Statement> ifelse = skip(if_.and(lp)).and(expr).skip(rp).and(lazyStmt).and(optional(skip(else_).and(lazyStmt)))
+    private static final Parser<Statement> ifelse = skip(if_.and(lp)).and(expr).skip(rp)
+            .and(lazyStmt)
+            .and(skip(else_).and(lazyStmt).optional(new EmptyStatement()))
             .map(p -> new IfElse(p.getFirst().getFirst(), p.getFirst().getSecond(), p.getSecond()));
     private static final Parser<Statement> forLoop = skip(for_.and(lp)).and(lazyStmt).skip(semi).and(expr).skip(semi).and(lazyStmt).skip(rp).and(lazyStmt)
             .map(p -> new ForLoop(p.getFirst().getFirst().getFirst(), p.getFirst().getFirst().getSecond(), p.getFirst().getSecond(), p.getSecond()));

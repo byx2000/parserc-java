@@ -1,13 +1,14 @@
 package byx.parserc.interpreter.runtime;
 
-import byx.parserc.interpreter.ast.FunctionValue;
-
+import java.util.Map;
 import java.util.Objects;
 
 public class Value {
     private final ValueType type;
     private final Object val;
 
+    private static final Value TRUE = new Value(ValueType.Bool, true);
+    private static final Value FALSE = new Value(ValueType.Bool, false);
     private static final Value UNDEFINED = new Value(ValueType.Undefined, null);
 
     private Value(ValueType type, Object val) {
@@ -24,7 +25,7 @@ public class Value {
     }
 
     public static Value of(boolean boolVal) {
-        return new Value(ValueType.Bool, boolVal);
+        return boolVal ? TRUE : FALSE;
     }
 
     public static Value of(String stringVal) {
@@ -33,6 +34,10 @@ public class Value {
 
     public static Value of(FunctionValue functionVal) {
         return new Value(ValueType.Function, functionVal);
+    }
+
+    public static Value of(Map<String, Value> props) {
+        return new Value(ValueType.Object, props);
     }
 
     public static Value undefined() {
@@ -88,6 +93,10 @@ public class Value {
         return type == ValueType.Function;
     }
 
+    public boolean isObject() {
+        return type == ValueType.Object;
+    }
+
     public boolean isUndefined() {
         return type == ValueType.Undefined;
     }
@@ -110,5 +119,10 @@ public class Value {
 
     public FunctionValue getFunction() {
         return (FunctionValue) val;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Value> getObject() {
+        return (Map<String, Value>) val;
     }
 }

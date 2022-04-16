@@ -88,8 +88,8 @@ public class Parsers {
     }
 
     public static <R1, R2> Parser<R2> map(Parser<R1> p, Function<R1, R2> mapper) {
-        return c -> {
-            ParseResult<R1> r = p.parse(c);
+        return input -> {
+            ParseResult<R1> r = p.parse(input);
             return new ParseResult<>(mapper.apply(r.getResult()), r.getRemain());
         };
     }
@@ -120,16 +120,16 @@ public class Parsers {
     }
 
     public static <R> Parser<List<R>> many(Parser<R> p) {
-        return c -> {
+        return input -> {
             List<R> result = new ArrayList<>();
             try {
                 while (true) {
-                    ParseResult<R> r = p.parse(c);
+                    ParseResult<R> r = p.parse(input);
                     result.add(r.getResult());
-                    c = r.getRemain();
+                    input = r.getRemain();
                 }
             } catch (ParseException e) {
-                return new ParseResult<>(result, c);
+                return new ParseResult<>(result, input);
             }
         };
     }
@@ -144,17 +144,21 @@ public class Parsers {
     }
 
     public static <R> Parser<R> optional(Parser<R> p) {
+        return optional(p, null);
+    }
+
+    public static <R> Parser<R> optional(Parser<R> p, R defaultResult) {
         return input -> {
             try {
                 return p.parse(input);
             } catch (ParseException e) {
-                return new ParseResult<>(null, input);
+                return new ParseResult<>(defaultResult, input);
             }
         };
     }
 
     public static <R> Parser<R> lazy(Supplier<Parser<R>> supplier) {
-        return c -> supplier.get().parse(c);
+        return input -> supplier.get().parse(input);
     }
 
     public interface SeparateParser<D, R> extends Parser<Pair<R, List<Pair<D, R>>>> {
