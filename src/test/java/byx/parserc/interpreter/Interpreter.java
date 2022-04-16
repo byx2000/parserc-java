@@ -41,6 +41,8 @@ public class Interpreter {
     private static final Parser<String> rp = string(")").surroundBy(ws);
     private static final Parser<String> lb = string("{").surroundBy(ws);
     private static final Parser<String> rb = string("}").surroundBy(ws);
+    private static final Parser<String> ls = string("[").surroundBy(ws);
+    private static final Parser<String> rs = string("]").surroundBy(ws);
     private static final Parser<String> add = string("+").surroundBy(ws);
     private static final Parser<String> sub = string("-").surroundBy(ws);
     private static final Parser<String> mul = string("*").surroundBy(ws);
@@ -91,6 +93,10 @@ public class Interpreter {
     private static final Parser<Pair<String, Expr>> propPair = identifier.skip(colon).and(lazyExpr);
     private static final Parser<Expr> obj = skip(lb).and(separateBy(comma, propPair).ignoreDelimiter()).skip(rb)
             .map(ps -> new ObjectExpr(ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))));
+    private static final Parser<Expr> arr = skip(ls).and(separateBy(comma, lazyExpr).ignoreDelimiter().optional(Collections.emptyList())).skip(rs)
+            .map(Array::new);
+    private static final Parser<Expr> subscript = skip(ls).and(lazyExpr).skip(rs);
+    @SuppressWarnings("unchecked")
     private static final Parser<Expr> e0 = oneOf(
             doubleConst,
             integerConst,
@@ -99,18 +105,21 @@ public class Interpreter {
             func,
             var,
             obj,
+            arr,
             skip(lp).and(lazyExpr).skip(rp),
             skip(not).and(lazyExpr).map(Not::new)
-    ).and(argList.mapTo(Object.class).or(skip(dot).and(identifier).mapTo(Object.class)).many()).map(p -> {
+    ).and(argList.mapTo(Object.class)
+            .or(skip(dot).and(identifier).mapTo(Object.class))
+            .or(subscript.mapTo(Object.class))
+            .many()).map(p -> {
         Expr e = p.getFirst();
         for (Object o : p.getSecond()) {
             if (o instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<Expr> callList = (List<Expr>) o;
-                e = new Call(e, callList);
+                e = new Call(e, (List<Expr>) o);
             } else if (o instanceof String) {
-                String propName = (String) o;
-                e = new Prop(e, propName);
+                e = new Prop(e, (String) o);
+            } else if (o instanceof Expr) {
+                e = new Subscript(e, (Expr) o);
             }
         }
         return e;

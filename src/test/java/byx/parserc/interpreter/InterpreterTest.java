@@ -1,15 +1,47 @@
 package byx.parserc.interpreter;
 
-import byx.parserc.interpreter.runtime.InterpretException;
-import byx.parserc.interpreter.runtime.Value;
+import byx.parserc.interpreter.runtime.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InterpreterTest {
+    private void verifyValue(Object expected, Value actual) {
+        if (actual instanceof IntegerValue) {
+            assertEquals(expected, ((IntegerValue) actual).getValue());
+        } else if (actual instanceof DoubleValue) {
+            assertEquals(expected, ((DoubleValue) actual).getValue());
+        } else if (actual instanceof StringValue) {
+            assertEquals(expected, ((StringValue) actual).getValue());
+        } else if (actual instanceof BoolValue) {
+            assertEquals(expected, ((BoolValue) actual).getValue());
+        } else if (actual instanceof ListValue) {
+            @SuppressWarnings("unchecked")
+            List<Object> expectedList = (List<Object>) expected;
+            List<Value> actualList = ((ListValue) actual).getValue();
+            assertEquals(expectedList.size(), actualList.size());
+            for (int i = 0; i < expectedList.size(); ++i) {
+                verifyValue(expectedList.get(i), actualList.get(i));
+            }
+        } else if (actual instanceof ObjectValue) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> expectedProps = (Map<String, Object>) expected;
+            Map<String, Value> actualProps = ((ObjectValue) actual).getProps();
+            expectedProps.forEach((k, v) -> verifyValue(v, actualProps.get(k)));
+        } else {
+            fail();
+        }
+    }
+
+    private void verify(String program, Map<String, Object> expected) {
+        Map<String, Value> result = Interpreter.run(program);
+        expected.forEach((k, v) -> verifyValue(v, result.get(k)));
+    }
+
     @Test
     public void test() {
         // 变量定义
@@ -281,6 +313,50 @@ public class InterpreterTest {
                 "var s2Name = s2.getName()\n" +
                 "var s2Age = s2.getAge()\n" +
                 "var s2Score = s2.score"));
+
+        // 数组
+        verify("var arr = [123, 3.14, [true, 3], 'hello', []] var a = arr[0] var b = arr[1] var c = arr[2] var d = arr[3] var e = arr[4]", Map.of(
+                "arr", List.of(123, 3.14, List.of(true, 3), "hello", List.of()),
+                "a", 123,
+                "b", 3.14,
+                "c", List.of(true, 3),
+                "d", "hello",
+                "e", List.of()
+        ));
+        verify("var arr = [[1, 2, 3], [4, 5, 6]] var a = arr[0][0] var b = arr[0][1] var c = arr[1][2] var d = arr[0] var e = arr[1]", Map.of(
+                "a", 1,
+                "b", 2,
+                "c", 6,
+                "d", List.of(1, 2, 3),
+                "e", List.of(4, 5, 6)
+        ));
+        verify("var arr = [(a, b) => a + b, (a, b) => a - b] var x = arr[0](3, 5) var y = arr[1](100, 40)", Map.of(
+                "x", 8,
+                "y", 60
+        ));
+        verify("var a = [{name: 'Zhang San', age: 17, scores: [100, 90, 80]}, {name: 'Li Si', age: 21, scores: [75, 80, 81]}] var s1 = a[0] var x = a[1].name var y = a[0].scores[1]", Map.of(
+                "s1", Map.of("name", "Zhang San", "age", 17, "scores", List.of(100, 90, 80)),
+                "x", "Li Si",
+                "y", 90
+        ));
+        verify("var arr = [1, 2, 3] var len1 = arr.length() arr.add(4) arr.add(5) var len2 = arr.length() arr.add(3.14) arr.add('hello') var len3 = arr.length()", Map.of(
+                "arr", List.of(1, 2, 3, 4, 5, 3.14, "hello"),
+                "len1", 3,
+                "len2", 5,
+                "len3", 7
+        ));
+        verify("var nums = [1, 2, 3, 4, 5] var s = 0 for (var i = 0; i < nums.length(); i = i + 1) s = s + nums[i]", Map.of(
+                "s", 15
+        ));
+        verify("var nums = [] for (var i = 1; i <= 100; i = i + 1) nums.add(i * i) var s = 0 for (var i = 0; i < nums.length(); i = i + 1) s = s + nums[i]", Map.of(
+            "s", 338350
+        ));
+        verify("var arr = [1, 2, 3, 4] var len1 = arr.length() var rm = arr.remove(2) var len2 = arr.length()", Map.of(
+                "len1", 4,
+                "rm", 3,
+                "len2", 3,
+                "arr", List.of(1, 2, 4)
+        ));
 
         // string内建方法
         assertEquals(Map.of("len", Value.of(5)), Interpreter.run("var len = 'hello'.length()"));

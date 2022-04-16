@@ -21,7 +21,7 @@ public class StringValue implements Value {
                 }),
                 "concat", Value.of(args -> {
                     if (args.size() != 1 || !(args.get(0) instanceof StringValue)) {
-                        throw new InterpretException("concat method require 1 string arguments");
+                        throw new InterpretException("concat method require 1 string argument");
                     }
                     String s = ((StringValue) args.get(0)).getValue();
                     return Value.of(value.concat(s));

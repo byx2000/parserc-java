@@ -26,8 +26,12 @@ public interface Value {
         return new CallableValue(val);
     }
 
-    static Value of (Map<String, Value> val) {
+    static Value of(Map<String, Value> val) {
         return new ObjectValue(val);
+    }
+
+    static Value of(List<Value> val) {
+        return new ListValue(val);
     }
 
     default Value add(Value rhs) {
@@ -95,6 +99,10 @@ public interface Value {
     }
 
     default Value getProp(String propName) {
+        return UNDEFINED;
+    }
+
+    default Value subscript(Value sub) {
         return UNDEFINED;
     }
 }
