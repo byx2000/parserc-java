@@ -1,8 +1,6 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.FunctionValue;
-import byx.parserc.interpreter.runtime.Scope;
-import byx.parserc.interpreter.runtime.Value;
+import byx.parserc.interpreter.runtime.*;
 
 import java.util.List;
 
@@ -17,6 +15,24 @@ public class FunctionExpr implements Expr {
 
     @Override
     public Value eval(Scope scope) {
-        return Value.of(new FunctionValue(params, body, scope));
+        return Value.of(args -> {
+            // 传递实参
+            Scope newScope = new Scope(scope);
+            for (int i = 0; i < params.size(); ++i) {
+                if (i < args.size()) {
+                    newScope.declareVar(params.get(i), args.get(i));
+                } else {
+                    newScope.declareVar(params.get(i), Value.UNDEFINED);
+                }
+            }
+
+            // 执行函数体
+            try {
+                body.execute(newScope);
+            } catch (ReturnException e) {
+                return e.getRetVal();
+            }
+            return Value.UNDEFINED;
+        });
     }
 }

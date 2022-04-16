@@ -85,7 +85,7 @@ public class Interpreter {
     private static final Parser<Expr> multiStmtFunc = paramList.skip(arrow.and(lb)).and(stmts).skip(rb)
             .map(p -> new FunctionExpr(p.getFirst(), new Block(p.getSecond())));
     private static final Parser<Expr> func = singleStmtFunc.or(multiStmtFunc);
-    private static final Parser<List<Expr>> callList = skip(lp)
+    private static final Parser<List<Expr>> argList = skip(lp)
             .and(separateBy(comma, lazyExpr).ignoreDelimiter().optional(Collections.emptyList()))
             .skip(rp);
     private static final Parser<Pair<String, Expr>> propPair = identifier.skip(colon).and(lazyExpr);
@@ -101,7 +101,7 @@ public class Interpreter {
             obj,
             skip(lp).and(lazyExpr).skip(rp),
             skip(not).and(lazyExpr).map(Not::new)
-    ).and(callList.mapTo(Object.class).or(skip(dot).and(identifier).mapTo(Object.class)).many()).map(p -> {
+    ).and(argList.mapTo(Object.class).or(skip(dot).and(identifier).mapTo(Object.class)).many()).map(p -> {
         Expr e = p.getFirst();
         for (Object o : p.getSecond()) {
             if (o instanceof List) {

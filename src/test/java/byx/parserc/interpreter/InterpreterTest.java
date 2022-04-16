@@ -281,5 +281,11 @@ public class InterpreterTest {
                 "var s2Name = s2.getName()\n" +
                 "var s2Age = s2.getAge()\n" +
                 "var s2Score = s2.score"));
+
+        // string内建方法
+        assertEquals(Map.of("len", Value.of(5)), Interpreter.run("var len = 'hello'.length()"));
+        assertEquals(Map.of("sub", Value.of("ell")), Interpreter.run("var sub = 'hello'.substring(1, 4)"));
+        assertEquals(Map.of("s1", Value.of("hello world!"), "s2", Value.of("hello world! aaa bbb")), Interpreter.run("var s1 = 'hello'.concat(' world!') var s2 = s1.concat(' aaa').concat(' bbb')"));
+        assertEquals(Map.of("i", Value.of(123), "d", Value.of(12.56), "b", Value.of(true)), Interpreter.run("var i = '123'.toInt() var d = '12.56'.toDouble() var b = 'true'.toBool()"));
     }
 }

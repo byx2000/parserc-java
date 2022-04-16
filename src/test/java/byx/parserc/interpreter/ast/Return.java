@@ -16,6 +16,6 @@ public class Return implements Statement {
         if (retVal != null) {
             throw new ReturnException(retVal.eval(scope));
         }
-        throw new ReturnException(Value.undefined());
+        throw new ReturnException(Value.UNDEFINED);
     }
 }

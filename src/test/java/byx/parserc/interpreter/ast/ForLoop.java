@@ -20,7 +20,7 @@ public class ForLoop implements Statement {
     @Override
     public void execute(Scope scope) {
         scope = new Scope(scope);
-        for (init.execute(scope); cond.eval(scope).getBool(); update.execute(scope)) {
+        for (init.execute(scope); cond.eval(scope).toCondition(); update.execute(scope)) {
             try {
                 body.execute(scope);
             } catch (BreakException e) {

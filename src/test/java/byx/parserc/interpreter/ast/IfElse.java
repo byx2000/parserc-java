@@ -15,7 +15,7 @@ public class IfElse implements Statement {
 
     @Override
     public void execute(Scope scope) {
-        if (cond.eval(scope).getBool()) {
+        if (cond.eval(scope).toCondition()) {
             trueBranch.execute(scope);
         } else {
             falseBranch.execute(scope);

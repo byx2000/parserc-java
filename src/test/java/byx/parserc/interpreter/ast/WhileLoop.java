@@ -15,7 +15,7 @@ public class WhileLoop implements Statement {
 
     @Override
     public void execute(Scope scope) {
-        while (cond.eval(scope).getBool()) {
+        while (cond.eval(scope).toCondition()) {
             try {
                 body.execute(scope);
             } catch (BreakException e) {

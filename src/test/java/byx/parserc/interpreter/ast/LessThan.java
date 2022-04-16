@@ -1,6 +1,5 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.InterpretException;
 import byx.parserc.interpreter.runtime.Value;
 
 public class LessThan extends BinaryOp {
@@ -10,18 +9,6 @@ public class LessThan extends BinaryOp {
 
     @Override
     protected Value doEval(Value v1, Value v2) {
-        if (v1.isInteger() && v2.isInteger()) {
-            return Value.of(v1.getInteger() < v2.getInteger());
-        } else if (v1.isInteger() && v2.isDouble()) {
-            return Value.of(v1.getInteger() < v2.getDouble());
-        } else if (v1.isDouble() && v2.isInteger()) {
-            return Value.of(v1.getDouble() < v2.getInteger());
-        } else if (v1.isDouble() && v2.isDouble()) {
-            return Value.of(v1.getDouble() < v2.getDouble());
-        } else if (v1.isString() && v2.isString()) {
-            return Value.of(v1.getString().compareTo(v2.getString()) < 0);
-        } else {
-            throw new InterpretException(String.format("Unsupported operator < between %s and %s", v1.getValue(), v2.getValue()));
-        }
+        return v1.lessThan(v2);
     }
 }

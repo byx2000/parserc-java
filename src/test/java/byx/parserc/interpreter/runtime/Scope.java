@@ -46,14 +46,14 @@ public class Scope {
 
     public Map<String, Value> getVars() {
         return vars.entrySet().stream()
-                .filter(e -> !e.getValue().isFunction())
+                .filter(e -> !(e.getValue() instanceof CallableValue))
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> processValue(e.getValue())));
     }
 
     private Value processValue(Value v) {
-        if (v.isObject()) {
-            return Value.of(v.getObject().entrySet().stream()
-                    .filter(e -> !e.getValue().isFunction())
+        if (v instanceof ObjectValue) {
+            return new ObjectValue(((ObjectValue) v).getProps().entrySet().stream()
+                    .filter(e -> !(e.getValue() instanceof CallableValue))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
         return v;

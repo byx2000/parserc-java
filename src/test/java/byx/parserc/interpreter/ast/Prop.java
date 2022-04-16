@@ -1,10 +1,7 @@
 package byx.parserc.interpreter.ast;
 
-import byx.parserc.interpreter.runtime.InterpretException;
 import byx.parserc.interpreter.runtime.Scope;
 import byx.parserc.interpreter.runtime.Value;
-
-import java.util.Map;
 
 public class Prop implements Expr {
     private final Expr obj;
@@ -17,14 +14,6 @@ public class Prop implements Expr {
 
     @Override
     public Value eval(Scope scope) {
-        Value v = obj.eval(scope);
-        if (!v.isObject()) {
-            throw new InterpretException(v.getValue() + "不是对象");
-        }
-        Map<String, Value> props = v.getObject();
-        if (!props.containsKey(propName)) {
-            throw new InterpretException("属性不存在：" + propName);
-        }
-        return props.get(propName);
+        return obj.eval(scope).getProp(propName);
     }
 }
