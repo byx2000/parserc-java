@@ -6,33 +6,15 @@ import static byx.parserc.Parsers.*;
  * 布尔表达式计算器
  */
 public class BoolExprCalc {
-    private static final Parser<Boolean> trueValue = ch('t').map(c -> true);
-    private static final Parser<Boolean> falseValue = ch('f').map(c -> false);
-    private static final Parser<Boolean> andExpr = seq(
-            string("&("),
-            separateBy(ch(','), lazy(BoolExprCalc::getBoolExpr)).ignoreDelimiter(),
-            ch(')'),
-            (a, b, c) -> b.stream().reduce(true, Boolean::logicalAnd)
-    );
-    private static final Parser<Boolean> orExpr = seq(
-            string("|("),
-            separateBy(ch(','), lazy(BoolExprCalc::getBoolExpr)).ignoreDelimiter(),
-            ch(')'),
-            (a, b, c) -> b.stream().reduce(false, Boolean::logicalOr)
-    );
-    private static final Parser<Boolean> notExpr = seq(
-            string("!("),
-            lazy(BoolExprCalc::getBoolExpr),
-            ch(')'),
-            (a, b, c) -> !b
-    );
-    private static final Parser<Boolean> boolExpr = oneOf(
-            trueValue,
-            falseValue,
-            andExpr,
-            orExpr,
-            notExpr
-    );
+    private static final Parser<Boolean> lazyBoolExpr = lazy(BoolExprCalc::getBoolExpr);
+    private static final Parser<Boolean> trueValue = ch('t').map(true);
+    private static final Parser<Boolean> falseValue = ch('f').map(false);
+    private static final Parser<Boolean> andExpr = skip(str("&(")).and(separate(ch(','), lazyBoolExpr)).skip(ch(')'))
+            .map(r -> r.stream().reduce(true, Boolean::logicalAnd));
+    private static final Parser<Boolean> orExpr = skip(str("|(")).and(separate(ch(','), lazyBoolExpr)).skip(ch(')'))
+            .map(r -> r.stream().reduce(false, Boolean::logicalOr));
+    private static final Parser<Boolean> notExpr = skip(str("!(")).and(lazyBoolExpr).skip(ch(')')).map(v -> !v);
+    private static final Parser<Boolean> boolExpr = oneOf(trueValue, falseValue, andExpr, orExpr, notExpr);
 
     private static Parser<Boolean> getBoolExpr() {
         return boolExpr;

@@ -26,4 +26,9 @@ public class ParseResult<R> {
     public Input getRemain() {
         return remain;
     }
+
+    @Override
+    public String toString() {
+        return String.format("ParseResult{result=%s, remain='%s'}", result, remain);
+    }
 }

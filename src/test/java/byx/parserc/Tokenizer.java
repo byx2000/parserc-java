@@ -74,23 +74,14 @@ public class Tokenizer {
     private static final Parser<Character> alpha = range('a', 'z').or(range('A', 'Z'));
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<Character> underline = ch('_');
-    private static final Parser<Token> identifier = seq(
-            oneOf(alpha, underline),
-            oneOf(digit, alpha, underline).many(),
-            (a, b) -> new Token(TokenType.Identifier, a + join(b))
-    );
+    private static final Parser<Token> identifier = oneOf(alpha, underline).and(oneOf(digit, alpha, underline).many())
+            .map(p -> new Token(TokenType.Identifier, p.getFirst() + join(p.getSecond())));
     private static final Parser<String> digits = digit.many1().map(Tokenizer::join);
     private static final Parser<Token> integer = digits.map(v -> new Token(TokenType.Integer, v));
-    private static final Parser<Token> decimal = seq(
-            digits, ch('.'), digits,
-            (a, b, c) -> new Token(TokenType.Decimal, a + b + c)
-    );
-    private static final Parser<Token> string = seq(
-            ch('\''),
-            not('\'').many(),
-            ch('\''),
-            (a, b, c) -> new Token(TokenType.String, join(b))
-    );
+    private static final Parser<Token> decimal = seq(digits, ch('.'), digits).map(Tokenizer::join)
+            .map(s -> new Token(TokenType.Decimal, s));
+    private static final Parser<Token> string = skip(ch('\'')).and(not('\'').many()).skip(ch('\''))
+            .map(r -> new Token(TokenType.String, join(r)));
     private static final Parser<Token> add = createTokenParser(TokenType.Add, "+");
     private static final Parser<Token> sub = createTokenParser(TokenType.Add, "-");
     private static final Parser<Token> mul = createTokenParser(TokenType.Add, "*");
@@ -121,14 +112,14 @@ public class Tokenizer {
             if_, for_, var, function,
             openParentheses, closeParentheses, openSquareBracket, closeSquareBracket, openCurlyBraces, closeCurlyBraces,
             semi, comma
-    ).surroundBy(ws).many();
+    ).surround(ws).many();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
     }
 
     private static Parser<Token> createTokenParser(TokenType type, String value) {
-        return string(value).map(v -> new Token(type, v));
+        return str(value).map(v -> new Token(type, v));
     }
 
     public static List<Token> tokenize(String s) {

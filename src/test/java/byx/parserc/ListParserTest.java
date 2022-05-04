@@ -1,5 +1,6 @@
 package byx.parserc;
 
+import byx.parserc.exception.ParseException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

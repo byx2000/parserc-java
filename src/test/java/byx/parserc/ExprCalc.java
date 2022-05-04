@@ -10,25 +10,25 @@ import static byx.parserc.Parsers.*;
  * 表达式计算器
  */
 public class ExprCalc {
-    private static final Parser<Character> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<List<Character>> ws = w.many();
-    private static final Parser<Character> digit = range('0', '9');
-    private static final Parser<Character> add = ch('+').surroundBy(ws);
-    private static final Parser<Character> sub = ch('-').surroundBy(ws);
-    private static final Parser<Character> mul = ch('*').surroundBy(ws);
-    private static final Parser<Character> div = ch('/').surroundBy(ws);
-    private static final Parser<Character> lp = ch('(').surroundBy(ws);
-    private static final Parser<Character> rp = ch(')').surroundBy(ws);
+    private static final Parser<?> w = chs(' ', '\t', '\r', '\n');
+    private static final Parser<?> ws = w.many();
+    private static final Parser<?> digit = range('0', '9');
+    private static final Parser<Character> add = ch('+').surround(ws);
+    private static final Parser<Character> sub = ch('-').surround(ws);
+    private static final Parser<Character> mul = ch('*').surround(ws);
+    private static final Parser<Character> div = ch('/').surround(ws);
+    private static final Parser<Character> lp = ch('(').surround(ws);
+    private static final Parser<Character> rp = ch(')').surround(ws);
     private static final Parser<String> digits = digit.many1().map(ExprCalc::join);
     private static final Parser<Double> integer = digits.map(Double::parseDouble);
-    private static final Parser<Double> decimal = seq(digits, ch('.'), digits, (a, b, c) -> Double.parseDouble(a + b + c));
-    private static final Parser<Double> number = decimal.or(integer).surroundBy(ws);
-    private static final Parser<Double> bracketExpr = lazy(ExprCalc::getExpr).surroundBy(lp, rp);
-    private static final Parser<Double> signExpr = seq(add.or(sub), lazy(ExprCalc::getFact), (s, v) -> s == '-' ? -v : v);
-    private static final Parser<Double> fact = oneOf(number, bracketExpr, signExpr);
-    private static final Parser<Double> term = separateBy(mul.or(div), fact).map(ExprCalc::calc);
-    private static final Parser<Double> expr = separateBy(add.or(sub), term).map(ExprCalc::calc);
-    
+    private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ExprCalc::join).map(Double::parseDouble);
+    private static final Parser<Double> number = decimal.or(integer).surround(ws);
+    private static final Parser<Double> bracketExpr = skip(lp).and(lazy(ExprCalc::getExpr)).skip(rp);
+    private static final Parser<Double> negExpr = skip(sub).and(lazy(ExprCalc::getFact)).map(e -> -e);
+    private static final Parser<Double> fact = oneOf(number, bracketExpr, negExpr);
+    private static final Parser<Double> term = fact.and(mul.or(div).and(fact).many()).map(ExprCalc::calc);
+    private static final Parser<Double> expr = term.and(add.or(sub).and(term).many()).map(ExprCalc::calc);
+
     private static Parser<Double> getFact() {
         return fact;
     }

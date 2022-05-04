@@ -1,5 +1,8 @@
 package byx.parserc;
 
+/**
+ * 长度为2的元组
+ */
 public class Pair<T, U> {
     private final T first;
     private final U second;
