@@ -1,21 +1,25 @@
 package byx.parserc.exception;
 
-import byx.parserc.Input;
+import byx.parserc.Cursor;
 
 /**
  * 解析异常
  */
 public class ParseException extends FastException {
-    private final Input input;
+    private final Cursor cursor;
     private final String msg;
 
-    public ParseException(Input input, String msg) {
-        this.input = input;
+    public ParseException(Cursor cursor) {
+        this(cursor, "");
+    }
+
+    public ParseException(Cursor cursor, String msg) {
+        this.cursor = cursor;
         this.msg = msg;
     }
 
-    public Input getInput() {
-        return input;
+    public Cursor getCursor() {
+        return cursor;
     }
 
     public String getMsg() {
@@ -24,6 +28,9 @@ public class ParseException extends FastException {
 
     @Override
     public String getMessage() {
-        return String.format("at row %d, col %d: %s", input.row(), input.col(), msg);
+        return msg != null && !msg.isBlank()
+                ? String.format("parse error at row %d, col %d: %s", cursor.row(), cursor.col(), msg)
+                : String.format("parse error at row %d, col %d", cursor.row(), cursor.col());
+
     }
 }

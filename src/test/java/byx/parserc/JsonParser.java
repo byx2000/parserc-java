@@ -28,10 +28,10 @@ public class JsonParser {
     private static final Parser<Character> arrEnd = ch(']').surround(ws);
     private static final Parser<Character> colon = ch(':').surround(ws);
     private static final Parser<Character> comma = ch(',').surround(ws);
-    private static final Parser<Object> lazyJsonObj = lazy(JsonParser::getJsonObj);
-    private static final Parser<List<Object>> arr = skip(arrStart).and(separate(comma, lazyJsonObj).opt(Collections.emptyList())).skip(arrEnd);
+    private static final Parser<Object> lazyJsonObj = lazy(() -> JsonParser.jsonObj);
+    private static final Parser<List<Object>> arr = skip(arrStart).and(list(comma, lazyJsonObj).opt(Collections.emptyList())).skip(arrEnd);
     private static final Parser<Pair<String, Object>> pair = string.skip(colon).and(lazyJsonObj);
-    private static final Parser<Map<String, Object>> obj = skip(objStart).and(separate(comma, pair).opt(Collections.emptyList())).skip(objEnd)
+    private static final Parser<Map<String, Object>> obj = skip(objStart).and(list(comma, pair).opt(Collections.emptyList())).skip(objEnd)
             .map(ps -> ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
     private static final Parser<Object> jsonObj = oneOf(
             decimal.mapTo(Object.class),
@@ -41,16 +41,13 @@ public class JsonParser {
             arr.mapTo(Object.class),
             obj.mapTo(Object.class)
     );
-    
-    private static Parser<Object> getJsonObj() {
-        return jsonObj;
-    }
+    private static final Parser<Object> parser = jsonObj.end();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining(""));
     }
 
     public static Object parse(String input) throws ParseException {
-        return jsonObj.parse(input);
+        return parser.parse(input);
     }
 }

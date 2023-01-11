@@ -1,5 +1,7 @@
 package byx.parserc;
 
+import java.util.Objects;
+
 /**
  * 长度为2的元组
  */
@@ -23,5 +25,18 @@ public class Pair<T, U> {
     @Override
     public String toString() {
         return String.format("(%s, %s)", first, second);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Pair<?, ?> pair = (Pair<?, ?>) o;
+        return Objects.equals(first, pair.first) && Objects.equals(second, pair.second);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(first, second);
     }
 }

@@ -5,30 +5,34 @@ package byx.parserc;
  * @param <R> 解析结果类型
  */
 public class ParseResult<R> {
-    /**
-     * 解析结果
-     */
     private final R result;
-    /**
-     * 剩余输入
-     */
-    private final Input remain;
+    private final Cursor before;
+    private final Cursor remain;
 
-    public ParseResult(R result, Input remain) {
+    public ParseResult(R result, Cursor before, Cursor remain) {
         this.result = result;
+        this.before = before;
         this.remain = remain;
     }
 
+    /**
+     * 获取解析结果
+     */
     public R getResult() {
         return result;
     }
 
-    public Input getRemain() {
-        return remain;
+    /**
+     * 获取解析前输入
+     */
+    public Cursor getBefore() {
+        return before;
     }
 
-    @Override
-    public String toString() {
-        return String.format("ParseResult{result=%s, remain='%s'}", result, remain);
+    /**
+     * 获取解析后剩余输入
+     */
+    public Cursor getRemain() {
+        return remain;
     }
 }

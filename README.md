@@ -58,8 +58,8 @@ public class ExprCalc {
         return res;
     }
 
-    public static Double eval(String input) {
-        return expr.parse(input);
+    public static Double eval(String cursor) {
+        return expr.parse(cursor);
     }
 }
 
@@ -110,8 +110,8 @@ public class JsonParser {
         return list.stream().map(Objects::toString).collect(Collectors.joining(""));
     }
 
-    public static Object parse(String input) throws ParseException {
-        return jsonObj.parse(input);
+    public static Object parse(String cursor) throws ParseException {
+        return jsonObj.parse(cursor);
     }
 }
 ```

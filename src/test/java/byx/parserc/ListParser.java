@@ -25,19 +25,16 @@ public class ListParser {
             decimal.mapTo(Object.class),
             integer.mapTo(Object.class),
             string.mapTo(Object.class),
-            lazy(ListParser::getList).mapTo(Object.class)
+            lazy(() -> ListParser.list).mapTo(Object.class)
     );
-    private static final Parser<List<Object>> list = skip(lp).and(separate(comma, listItem).opt(Collections.emptyList())).skip(rp);
+    private static final Parser<List<Object>> list = skip(lp).and(list(comma, listItem).opt(Collections.emptyList())).skip(rp);
+    private static final Parser<List<Object>> parser = list.end();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
     }
 
-    private static Parser<List<Object>> getList() {
-        return list;
-    }
-
     public static List<Object> parse(String s) {
-        return list.parse(s);
+        return parser.parse(s);
     }
 }

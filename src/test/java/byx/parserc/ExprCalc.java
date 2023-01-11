@@ -23,19 +23,12 @@ public class ExprCalc {
     private static final Parser<Double> integer = digits.map(Double::parseDouble);
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ExprCalc::join).map(Double::parseDouble);
     private static final Parser<Double> number = decimal.or(integer).surround(ws);
-    private static final Parser<Double> bracketExpr = skip(lp).and(lazy(ExprCalc::getExpr)).skip(rp);
-    private static final Parser<Double> negExpr = skip(sub).and(lazy(ExprCalc::getFact)).map(e -> -e);
+    private static final Parser<Double> bracketExpr = skip(lp).and(lazy(() -> ExprCalc.expr)).skip(rp);
+    private static final Parser<Double> negExpr = skip(sub).and(lazy(() -> ExprCalc.fact)).map(e -> -e);
     private static final Parser<Double> fact = oneOf(number, bracketExpr, negExpr);
     private static final Parser<Double> term = fact.and(mul.or(div).and(fact).many()).map(ExprCalc::calc);
     private static final Parser<Double> expr = term.and(add.or(sub).and(term).many()).map(ExprCalc::calc);
-
-    private static Parser<Double> getFact() {
-        return fact;
-    }
-
-    private static Parser<Double> getExpr() {
-        return expr;
-    }
+    private static final Parser<Double> parser = expr.end();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
@@ -63,6 +56,6 @@ public class ExprCalc {
     }
 
     public static Double eval(String input) {
-        return expr.parse(input);
+        return parser.parse(input);
     }
 }
