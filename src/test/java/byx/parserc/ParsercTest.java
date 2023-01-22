@@ -543,7 +543,7 @@ public class ParsercTest {
     }
 
     @Test
-    public void testFatal() {
+    public void testFatal1() {
         Parser<List<Object>> p1 = seq(ch('a'), ch('b').fatal("expected b"));
         Parser<List<Object>> p2 = seq(ch('b'), ch('y').fatal("expected y"), ch('c').fatal("expected c"));
         Parser<List<Object>> p3 = seq(ch('c'), ch('m').fatal("expected m"));
@@ -559,5 +559,21 @@ public class ParsercTest {
         MyException e5 = assertThrowsExactly(MyException.class, () -> p.parse("dfagdf"));
         assertTrue(e5.getMessage().contains("a or b or c"));
         assertEquals(0, e5.getCursor().getIndex());
+    }
+
+    @Test
+    public void testFatal2() {
+        Parser<Character> p = ch('a').fatal((c, e) -> {
+            assertEquals(0, c.getIndex());
+            assertNotNull(e);
+            return new MyException(c, "");
+        });
+        assertThrows(MyException.class, () -> p.parse("bcd"));
+    }
+
+    @Test
+    public void testFatal3() {
+        Parser<Character> p = ch('a').fatal();
+        assertThrowsExactly(FatalParseException.class, () -> p.parse("bcd"));
     }
 }

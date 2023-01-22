@@ -515,31 +515,43 @@ public class Parsers {
     }
 
     /**
-     * <p>当解析器p抛出ParseException时，转化成FatalParseException重新抛出，并携带错误消息msg</p>
-     * <p>FatalParseException不会被or和oneOf组合子捕获</p>
-     * @param p 解析器
-     * @param msg 错误消息
+     * 当解析器p抛出ParseException时，使用exceptionMapper转换异常并重新抛出
+     * @param p 解析器p
+     * @param exceptionMapper 异常转换器
      */
-    public static <R> Parser<R> fatal(Parser<R> p, String msg) {
-        return p.mapException((cursor, throwable) -> {
-            if (throwable instanceof ParseException) {
-                return new FatalParseException(cursor, msg);
+    public static <R> Parser<R> fatal(Parser<R> p, BiFunction<Cursor, ParseException, RuntimeException> exceptionMapper) {
+        return p.mapException((cursor, e) -> {
+            if (e instanceof ParseException) {
+                return exceptionMapper.apply(cursor, (ParseException) e);
             }
-            return throwable;
+            return e;
         });
     }
 
     /**
-     * 当解析器p抛出ParseException时，转化成exceptionSupplier生成的自定义异常并重新抛出
-     * @param p 解析器
-     * @param exceptionSupplier 异常生成器
+     * 当当解析器p抛出ParseException时，使用exceptionMapper转换异常并重新抛出
+     * @param p 解析器p
+     * @param exceptionMapper 异常转换器
      */
-    public static <R> Parser<R> fatal(Parser<R> p, Function<Cursor, RuntimeException> exceptionSupplier) {
-        return p.mapException((cursor, throwable) -> {
-            if (throwable instanceof ParseException) {
-                return exceptionSupplier.apply(cursor);
-            }
-            return throwable;
-        });
+    public static <R> Parser<R> fatal(Parser<R> p, Function<Cursor, RuntimeException> exceptionMapper) {
+        return fatal(p, (c, e) -> exceptionMapper.apply(c));
+    }
+
+    /**
+     * <p>当解析器p抛出ParseException时，转化成FatalParseException重新抛出，并携带错误消息msg</p>
+     * <p>FatalParseException不会被or和oneOf组合子捕获</p>
+     * @param p 解析器p
+     * @param msg 错误消息
+     */
+    public static <R> Parser<R> fatal(Parser<R> p, String msg) {
+        return fatal(p, c -> new FatalParseException(c, msg));
+    }
+
+    /**
+     * <p>当解析器p抛出ParseException时，转化成FatalParseException重新抛出，并携带ParseException的错误消息</p>
+     * @param p 解析器p
+     */
+    public static <R> Parser<R> fatal(Parser<R> p) {
+        return fatal(p, (c, e) -> new FatalParseException(c, e.getMsg()));
     }
 }

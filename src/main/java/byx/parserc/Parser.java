@@ -158,6 +158,22 @@ public interface Parser<R> {
     }
 
     /**
+     * 当前解析器抛出ParseException时，使用exceptionMapper转换异常并重新抛出
+     * @param exceptionMapper 异常转换器
+     */
+    default Parser<R> fatal(BiFunction<Cursor, ParseException, RuntimeException> exceptionMapper) {
+        return Parsers.fatal(this, exceptionMapper);
+    }
+
+    /**
+     * 当前解析器抛出ParseException时，使用exceptionMapper转换异常并重新抛出
+     * @param exceptionMapper 异常转换器
+     */
+    default Parser<R> fatal(Function<Cursor, RuntimeException> exceptionMapper) {
+        return Parsers.fatal(this, exceptionMapper);
+    }
+
+    /**
      * <p>当前解析器抛出ParseException时，转化成FatalParseException重新抛出，并携带错误消息msg</p>
      * <p>FatalParseException不会被or和oneOf等组合子捕获</p>
      * @param msg msg
@@ -167,11 +183,10 @@ public interface Parser<R> {
     }
 
     /**
-     * 当解析器p抛出ParseException时，转化成exceptionSupplier生成的自定义异常并重新抛出
-     * @param exceptionSupplier 异常生成器
+     * 当前解析器抛出ParseException时，转化成FatalParseException重新抛出，并携带ParseException的错误消息
      */
-    default Parser<R> fatal(Function<Cursor, RuntimeException> exceptionSupplier) {
-        return Parsers.fatal(this, exceptionSupplier);
+    default Parser<R> fatal() {
+        return Parsers.fatal(this);
     }
 
     /**
