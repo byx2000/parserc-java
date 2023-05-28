@@ -31,6 +31,5 @@ public class ParseException extends FastException {
         return msg != null && !msg.isBlank()
                 ? String.format("parse error at row %d, col %d: %s", cursor.row(), cursor.col(), msg)
                 : String.format("parse error at row %d, col %d", cursor.row(), cursor.col());
-
     }
 }

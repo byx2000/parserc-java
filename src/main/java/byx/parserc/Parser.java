@@ -2,6 +2,7 @@ package byx.parserc;
 
 import byx.parserc.exception.ParseException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -15,18 +16,16 @@ public interface Parser<R> {
      * 解析输入
      * @param cursor 输入
      * @return 解析结果
-     * @throws ParseException 解析异常
      */
-    ParseResult<R> parse(Cursor cursor) throws ParseException;
+    ParseResult<R> parse(Cursor cursor);
 
     /**
      * 解析字符串
      * @param s 输入字符串
      * @return 解析结果
-     * @throws ParseException 解析异常
      */
-    default R parse(String s) throws ParseException {
-        return parse(new Cursor(s, 0)).getResult();
+    default R parse(String s) {
+        return parse(new Cursor(s)).getResult();
     }
 
     /**
@@ -35,7 +34,27 @@ public interface Parser<R> {
      * @param rhs 解析器2
      */
     default <R2> Parser<Pair<R, R2>> and(Parser<R2> rhs) {
-        return Parsers.and(this, rhs);
+        return cursor -> {
+            ParseResult<R> r1 = this.parse(cursor);
+            ParseResult<R2> r2 = rhs.parse(r1.getRemain());
+            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), cursor, r2.getRemain());
+        };
+    }
+
+    /**
+     * 在当前解析器后连接字符c
+     * @param c c
+     */
+    default Parser<Pair<R, Character>> and(char c) {
+        return this.and(Parsers.ch(c));
+    }
+
+    /**
+     * 在当前解析器后连接字符串s
+     * @param s s
+     */
+    default Parser<Pair<R, String>> and(String s) {
+        return this.and(Parsers.str(s));
     }
 
     /**
@@ -44,7 +63,13 @@ public interface Parser<R> {
      * @param rhs 解析器2
      */
     default Parser<R> or(Parser<R> rhs) {
-        return Parsers.or(this, rhs);
+        return cursor -> {
+            try {
+                return this.parse(cursor);
+            } catch (ParseException e) {
+                return rhs.parse(cursor);
+            }
+        };
     }
 
     /**
@@ -52,7 +77,10 @@ public interface Parser<R> {
      * @param mapper 结果转换器
      */
     default <R2> Parser<R2> map(Function<R, R2> mapper) {
-        return Parsers.map(this, mapper);
+        return cursor -> {
+            ParseResult<R> r = this.parse(cursor);
+            return new ParseResult<>(mapper.apply(r.getResult()), cursor, r.getRemain());
+        };
     }
 
     /**
@@ -60,7 +88,13 @@ public interface Parser<R> {
      * @param exceptionMapper 异常转换器，参数为当前位置和异常对象
      */
     default Parser<R> mapException(BiFunction<Cursor, RuntimeException, RuntimeException> exceptionMapper) {
-        return Parsers.mapException(this, exceptionMapper);
+        return cursor -> {
+            try {
+                return this.parse(cursor);
+            } catch (RuntimeException t) {
+                throw exceptionMapper.apply(cursor, t);
+            }
+        };
     }
 
     /**
@@ -68,14 +102,14 @@ public interface Parser<R> {
      * @param exceptionMapper 异常转换器，参数为异常对象
      */
     default Parser<R> mapException(Function<RuntimeException, RuntimeException> exceptionMapper) {
-        return Parsers.mapException(this, exceptionMapper);
+        return this.mapException((cursor, throwable) -> exceptionMapper.apply(throwable));
     }
 
     /**
      * 丢弃当前解析器的结果，并返回另一个结果
      * @param result 结果
      */
-    default <R2> Parser<R2> map(R2 result) {
+    default <R2> Parser<R2> value(R2 result) {
         return this.map(r -> result);
     }
 
@@ -91,14 +125,31 @@ public interface Parser<R> {
      * 连续应用当前解析器零次或多次，直到失败
      */
     default Parser<List<R>> many() {
-        return Parsers.many(this);
+        return cursor -> {
+            Cursor oldCursor = cursor;
+            List<R> result = new ArrayList<>();
+            try {
+                while (true) {
+                    ParseResult<R> r = this.parse(cursor);
+                    result.add(r.getResult());
+                    cursor = r.getRemain();
+                }
+            } catch (ParseException e) {
+                return new ParseResult<>(result, oldCursor, cursor);
+            }
+        };
     }
 
     /**
      * 连续应用当前解析器一次或多次，直到失败
      */
     default Parser<List<R>> many1() {
-        return Parsers.many1(this);
+        return this.and(this.many()).map(r -> {
+            List<R> result = new ArrayList<>();
+            result.add(r.getFirst());
+            result.addAll(r.getSecond());
+            return result;
+        });
     }
 
     /**
@@ -106,7 +157,16 @@ public interface Parser<R> {
      * @param times 重复次数
      */
     default Parser<List<R>> repeat(int times) {
-        return Parsers.repeat(this, times);
+        return cursor -> {
+            Cursor oldCursor = cursor;
+            List<R> result = new ArrayList<>();
+            for (int i = 0; i < times; i++) {
+                ParseResult<R> r = this.parse(cursor);
+                result.add(r.getResult());
+                cursor = r.getRemain();
+            }
+            return new ParseResult<>(result, oldCursor, cursor);
+        };
     }
 
     /**
@@ -114,7 +174,7 @@ public interface Parser<R> {
      * @param rhs rhs
      */
     default <R2> Parser<R> skip(Parser<R2> rhs) {
-        return Parsers.skipSecond(this, rhs);
+        return this.and(rhs).map(Pair::getFirst);
     }
 
     /**
@@ -123,7 +183,7 @@ public interface Parser<R> {
      * @param suffix 后缀
      */
     default Parser<R> surround(Parser<?> prefix, Parser<?> suffix) {
-        return Parsers.surround(this, prefix, suffix);
+        return Parsers.skip(prefix).and(this).skip(suffix);
     }
 
     /**
@@ -131,7 +191,7 @@ public interface Parser<R> {
      * @param s s
      */
     default Parser<R> surround(Parser<?> s) {
-        return Parsers.surround(this, s);
+        return this.surround(s, s);
     }
 
     /**
@@ -139,14 +199,20 @@ public interface Parser<R> {
      * @param defaultResult 默认值
      */
     default Parser<R> opt(R defaultResult) {
-        return Parsers.opt(this, defaultResult);
+        return cursor -> {
+            try {
+                return this.parse(cursor);
+            } catch (ParseException e) {
+                return new ParseResult<>(defaultResult, cursor, cursor);
+            }
+        };
     }
 
     /**
      * 解析器p解析成功时返回其解析结果，否则解析成功并返回null
      */
     default Parser<R> opt() {
-        return Parsers.opt(this);
+        return this.opt(null);
     }
 
     /**
@@ -154,7 +220,10 @@ public interface Parser<R> {
      * @param flatMap 解析器生成器
      */
     default <R2> Parser<R2> then(Function<ParseResult<R>, Parser<R2>> flatMap) {
-        return Parsers.then(this, flatMap);
+        return cursor -> {
+            ParseResult<R> r = this.parse(cursor);
+            return flatMap.apply(r).parse(r.getRemain());
+        };
     }
 
     /**
@@ -162,7 +231,12 @@ public interface Parser<R> {
      * @param exceptionMapper 异常转换器
      */
     default Parser<R> fatal(BiFunction<Cursor, ParseException, RuntimeException> exceptionMapper) {
-        return Parsers.fatal(this, exceptionMapper);
+        return this.mapException((cursor, e) -> {
+            if (e instanceof ParseException) {
+                return exceptionMapper.apply(cursor, (ParseException) e);
+            }
+            return e;
+        });
     }
 
     /**
@@ -170,23 +244,7 @@ public interface Parser<R> {
      * @param exceptionMapper 异常转换器
      */
     default Parser<R> fatal(Function<Cursor, RuntimeException> exceptionMapper) {
-        return Parsers.fatal(this, exceptionMapper);
-    }
-
-    /**
-     * <p>当前解析器抛出ParseException时，转化成FatalParseException重新抛出，并携带错误消息msg</p>
-     * <p>FatalParseException不会被or和oneOf等组合子捕获</p>
-     * @param msg msg
-     */
-    default Parser<R> fatal(String msg) {
-        return Parsers.fatal(this, msg);
-    }
-
-    /**
-     * 当前解析器抛出ParseException时，转化成FatalParseException重新抛出，并携带ParseException的错误消息
-     */
-    default Parser<R> fatal() {
-        return Parsers.fatal(this);
+        return this.fatal((c, e) -> exceptionMapper.apply(c));
     }
 
     /**
@@ -194,5 +252,21 @@ public interface Parser<R> {
      */
     default Parser<R> end() {
         return this.skip(Parsers.end());
+    }
+
+    /**
+     * 当前解析器应用后执行断言predicate，断言失败抛出异常
+     * @param predicate predicate
+     */
+    default Parser<R> follow(Parser<?> predicate) {
+        return this.skip(Parsers.expect(predicate));
+    }
+
+    /**
+     * 当前解析器应用后执行断言predicate，断言成功抛出异常
+     * @param predicate predicate
+     */
+    default Parser<R> notFollow(Parser<?> predicate) {
+        return this.skip(Parsers.not(predicate));
     }
 }

@@ -1,21 +1,18 @@
 package byx.parserc;
 
-import byx.parserc.exception.EndOfInputException;
+
+import byx.parserc.exception.ParseException;
 
 /**
  * 封装当前解析位置
  */
-public class Cursor {
+public final class Cursor {
     private final String s;
     private final int index;
     private final int row, col;
 
     public Cursor(String s) {
-        this(s, 0);
-    }
-
-    public Cursor(String s, int index) {
-        this(s, index, 1, 1);
+        this(s, 0, 1, 1);
     }
 
     private Cursor(String s, int index, int row, int col) {
@@ -25,9 +22,9 @@ public class Cursor {
         this.col = col;
     }
 
-    public Cursor next() throws EndOfInputException {
+    public Cursor next() throws ParseException {
         if (end()) {
-            throw new EndOfInputException(this);
+            throw new ParseException(this, "unexpected end of input");
         }
 
         int row = this.row;
@@ -41,7 +38,6 @@ public class Cursor {
 
     /**
      * 是否到达输入结尾
-     * @return 是否到达结尾
      */
     public boolean end() {
         return index == s.length();
@@ -49,26 +45,23 @@ public class Cursor {
 
     /**
      * 获取当前字符
-     * @return 当前字符
      */
-    public char current() throws EndOfInputException {
+    public char current() throws ParseException {
         if (end()) {
-            throw new EndOfInputException(this);
+            throw new ParseException(this, "unexpected end of input");
         }
         return s.charAt(index);
     }
 
     /**
      * 获取当前索引
-     * @return 当前索引
      */
-    public int getIndex() {
+    public int index() {
         return index;
     }
 
     /**
      * 获取当前行号
-     * @return 当前行号
      */
     public int row() {
         return row;
@@ -76,14 +69,8 @@ public class Cursor {
 
     /**
      * 获取当前列号
-     * @return 当前列号
      */
     public int col() {
         return col;
-    }
-
-    @Override
-    public String toString() {
-        return s.substring(index);
     }
 }

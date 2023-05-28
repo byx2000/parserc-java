@@ -1,17 +1,18 @@
 package byx.parserc;
 
-import byx.parserc.exception.FatalParseException;
 import byx.parserc.exception.ParseException;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * 解析器组合子的静态工厂
+ * 常用解析器的静态工厂
  */
 public class Parsers {
     /**
@@ -215,20 +216,6 @@ public class Parsers {
     }
 
     /**
-     * <p>连续应用两个解析器，并组合两个解析器的解析结果</p>
-     * <p>如果任意一个解析器解析失败，则解析失败</p>
-     * @param lhs 解析器1
-     * @param rhs 解析器2
-     */
-    public static <R1, R2> Parser<Pair<R1, R2>> and(Parser<R1> lhs, Parser<R2> rhs) {
-        return cursor -> {
-            ParseResult<R1> r1 = lhs.parse(cursor);
-            ParseResult<R2> r2 = rhs.parse(r1.getRemain());
-            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), cursor, r2.getRemain());
-        };
-    }
-
-    /**
      * <p>连续应用多个解析器，并组合所有解析器的解析结果</p>
      * <p>如果任意一个解析器解析失败，则解析失败</p>
      * @param parsers 解析器数组
@@ -247,139 +234,30 @@ public class Parsers {
     }
 
     /**
-     * <p>依次尝试应用两个解析器，如果成功则返回其解析结果</p>
-     * <p>如果两个解析器都失败，则解析失败</p>
-     * @param lhs 解析器1
-     * @param rhs 解析器2
-     */
-    public static <R> Parser<R> or(Parser<R> lhs, Parser<R> rhs) {
-        return cursor -> {
-            try {
-                return lhs.parse(cursor);
-            } catch (ParseException e) {
-                return rhs.parse(cursor);
-            }
-        };
-    }
-
-    /**
      * <p>依次尝试应用parsers中的解析器，如果成功则返回其解析结果</p>
      * <p>如果所有解析器都解析失败，则解析失败</p>
      * @param parsers 解析器数组
      */
     @SafeVarargs
     public static <R> Parser<R> oneOf(Parser<R>... parsers) {
-        return Arrays.stream(parsers).reduce(fail(), Parser::or);
+        return Arrays.stream(parsers).reduce(fail("no parser available"), Parser::or);
     }
 
     /**
-     * 应用解析器p，并转换解析结果
-     * @param p 解析器
-     * @param mapper 结果转换器
+     * <p>依次尝试应用parsers中的解析器，如果成功则返回其解析结果</p>
+     * <p>parsers中的解析器可以是不同的类型</p>
+     * <p>如果所有解析器都解析失败，则解析失败</p>
+     * @param parsers 解析器数组
      */
-    public static <R1, R2> Parser<R2> map(Parser<R1> p, Function<R1, R2> mapper) {
-        return cursor -> {
-            ParseResult<R1> r = p.parse(cursor);
-            return new ParseResult<>(mapper.apply(r.getResult()), cursor, r.getRemain());
-        };
-    }
-
-    /**
-     * 应用解析器p，当发生异常时转换异常
-     * @param p 解析器
-     * @param exceptionMapper 异常转换器，参数为当前位置和异常对象
-     */
-    public static <R> Parser<R> mapException(Parser<R> p, BiFunction<Cursor, RuntimeException, RuntimeException> exceptionMapper) {
-        return cursor -> {
-            try {
-                return p.parse(cursor);
-            } catch (RuntimeException t) {
-                throw exceptionMapper.apply(cursor, t);
+    public static Parser<Object> alt(Parser<?>... parsers) {
+        return input -> {
+            for (Parser<?> p : parsers) {
+                try {
+                    return p.mapTo(Object.class).parse(input);
+                } catch (ParseException ignored) {}
             }
+            throw new ParseException(input, "no parser available");
         };
-    }
-
-    /**
-     * 应用解析器p，当发生异常时转换异常
-     * @param p 解析器
-     * @param exceptionMapper 异常转换器，参数为异常对象
-     */
-    public static <R> Parser<R> mapException(Parser<R> p, Function<RuntimeException, RuntimeException> exceptionMapper) {
-        return mapException(p, ((cursor, throwable) -> exceptionMapper.apply(throwable)));
-    }
-
-    /**
-     * 连续应用解析器p零次或多次，直到失败
-     * @param p 解析器
-     */
-    public static <R> Parser<List<R>> many(Parser<R> p) {
-        return cursor -> {
-            Cursor oldCursor = cursor;
-            List<R> result = new ArrayList<>();
-            try {
-                while (true) {
-                    ParseResult<R> r = p.parse(cursor);
-                    result.add(r.getResult());
-                    cursor = r.getRemain();
-                }
-            } catch (ParseException e) {
-                return new ParseResult<>(result, oldCursor, cursor);
-            }
-        };
-    }
-
-    /**
-     * 连续应用解析器p一次或多次，直到失败
-     * @param p 解析器
-     */
-    public static <R> Parser<List<R>> many1(Parser<R> p) {
-        return p.and(p.many()).map(r -> {
-            List<R> result = new ArrayList<>();
-            result.add(r.getFirst());
-            result.addAll(r.getSecond());
-            return result;
-        });
-    }
-
-    /**
-     * 连续应用解析器p指定次数
-     * @param p 解析器
-     * @param times 重复次数
-     */
-    public static <R> Parser<List<R>> repeat(Parser<R> p, int times) {
-        return cursor -> {
-            Cursor oldCursor = cursor;
-            List<R> result = new ArrayList<>();
-            for (int i = 0; i < times; i++) {
-                ParseResult<R> r = p.parse(cursor);
-                result.add(r.getResult());
-                cursor = r.getRemain();
-            }
-            return new ParseResult<>(result, oldCursor, cursor);
-        };
-    }
-
-    /**
-     * 解析器p解析成功时返回其解析结果，否则解析成功并返回defaultResult
-     * @param p 解析器
-     * @param defaultResult 默认值
-     */
-    public static <R> Parser<R> opt(Parser<R> p, R defaultResult) {
-        return cursor -> {
-            try {
-                return p.parse(cursor);
-            } catch (ParseException e) {
-                return new ParseResult<>(defaultResult, cursor, cursor);
-            }
-        };
-    }
-
-    /**
-     * 解析器p解析成功时返回其解析结果，否则解析成功并返回null
-     * @param p 解析器
-     */
-    public static <R> Parser<R> opt(Parser<R> p) {
-        return opt(p, null);
     }
 
     /**
@@ -391,72 +269,6 @@ public class Parsers {
         return cursor -> parserSupplier.get().parse(cursor);
     }
 
-    /**
-     * <p>解析列表型数据</p>
-     * <p>prefix elem delimiter elem delimiter ... suffix</p>
-     * @param prefix 前缀
-     * @param suffix 后缀
-     * @param delimiter 元素分隔符
-     * @param elem 元素
-     */
-    public static <R> Parser<List<R>> list(Parser<?> prefix, Parser<?> suffix, Parser<?> delimiter, Parser<R> elem) {
-        Parser<List<R>> emptyList = prefix.and(suffix).map(r -> Collections.emptyList());
-        Parser<List<R>> notEmptyList = skip(prefix).and(elem).and(skip(delimiter).and(elem).many()).skip(suffix).map(p -> {
-            List<R> result = new ArrayList<>();
-            result.add(p.getFirst());
-            result.addAll(p.getSecond());
-            return result;
-        });
-        return oneOf(notEmptyList, emptyList);
-    }
-
-    /**
-     * <p>解析列表型数据</p>
-     * <p>elem delimiter elem delimiter ...</p>
-     * @param delimiter 元素分隔符
-     * @param elem 元素
-     */
-    public static <R> Parser<List<R>> list(Parser<?> delimiter, Parser<R> elem) {
-        return list(empty(), empty(), delimiter, elem);
-    }
-
-    /**
-     * 在解析器p前后连接prefix和suffix
-     * @param p 解析器
-     * @param prefix 前缀
-     * @param suffix 后缀
-     */
-    public static <R> Parser<R> surround(Parser<R> p, Parser<?> prefix, Parser<?> suffix) {
-        return skip(prefix).and(p).skip(suffix);
-    }
-
-    /**
-     * 在解析器p前后连接s
-     * @param p p
-     * @param s s
-     */
-    public static <R> Parser<R> surround(Parser<R> p, Parser<?> s) {
-        return surround(p, s, s);
-    }
-
-    /**
-     * 连接两个解析器，并丢弃第一个解析器的结果
-     * @param lhs 第一个解析器
-     * @param rhs 第二个解析器
-     */
-    public static <R> Parser<R> skipFirst(Parser<?> lhs, Parser<R> rhs) {
-        return lhs.and(rhs).map(Pair::getSecond);
-    }
-
-    /**
-     * 连接两个解析器，并丢弃第二个解析器的结果
-     * @param lhs 第一个解析器
-     * @param rhs 第二个解析器
-     */
-    public static <R> Parser<R> skipSecond(Parser<R> lhs, Parser<?> rhs) {
-        return lhs.and(rhs).map(Pair::getFirst);
-    }
-
     public static class SkipWrapper<R> {
         private final Parser<R> lhs;
 
@@ -465,12 +277,12 @@ public class Parsers {
         }
 
         public <R2> Parser<R2> and(Parser<R2> rhs) {
-            return skipFirst(lhs, rhs);
+            return lhs.and(rhs).map(Pair::getSecond);
         }
     }
 
     /**
-     * 跳过第一个解析器，并连接第二个解析器
+     * 连接两个解析器，并丢弃第一个解析器的结果
      * @param lhs 第一个解析器
      */
     public static <R> SkipWrapper<R> skip(Parser<R> lhs) {
@@ -478,80 +290,28 @@ public class Parsers {
     }
 
     /**
-     * 根据predicate解析器的执行成功与否，选择执行success或failed解析器
+     * 在当前位置应用解析器predicate，解析成功不消耗任何输入，解析失败抛出ParseException
      * @param predicate predicate
-     * @param success success
-     * @param failed failed
      */
-    public static <R> Parser<R> peek(Parser<?> predicate, Parser<R> success, Parser<R> failed) {
+    public static <R> Parser<R> expect(Parser<?> predicate) {
+        return cursor -> {
+            predicate.parse(cursor);
+            return new ParseResult<>(null, cursor, cursor);
+        };
+    }
+
+    /**
+     * 在当前位置应用解析器predicate，解析成功抛出ParseException，解析失败不消耗任何输入
+     * @param predicate predicate
+     */
+    public static <R> Parser<R> not(Parser<?> predicate) {
         return cursor -> {
             try {
                 predicate.parse(cursor);
             } catch (ParseException e) {
-                return failed.parse(cursor);
+                return new ParseResult<>(null, cursor, cursor);
             }
-            return success.parse(cursor);
+            throw new ParseException(cursor);
         };
-    }
-
-    /**
-     * 一直向前解析，直到解析器p执行成功，并返回p的解析结果
-     * @param p p
-     */
-    public static <R> Parser<R> until(Parser<R> p) {
-        return skip(peek(p, fail(), any()).many()).and(p);
-    }
-
-    /**
-     * 首先应用解析器p，然后调用flatMap生成下一个解析器，再接着应用下一个解析器
-     * @param p 解析器
-     * @param flatMap 解析器生成器
-     */
-    public static <R1, R2> Parser<R2> then(Parser<R1> p, Function<ParseResult<R1>, Parser<R2>> flatMap) {
-        return cursor -> {
-            ParseResult<R1> r = p.parse(cursor);
-            return flatMap.apply(r).parse(r.getRemain());
-        };
-    }
-
-    /**
-     * 当解析器p抛出ParseException时，使用exceptionMapper转换异常并重新抛出
-     * @param p 解析器p
-     * @param exceptionMapper 异常转换器
-     */
-    public static <R> Parser<R> fatal(Parser<R> p, BiFunction<Cursor, ParseException, RuntimeException> exceptionMapper) {
-        return p.mapException((cursor, e) -> {
-            if (e instanceof ParseException) {
-                return exceptionMapper.apply(cursor, (ParseException) e);
-            }
-            return e;
-        });
-    }
-
-    /**
-     * 当当解析器p抛出ParseException时，使用exceptionMapper转换异常并重新抛出
-     * @param p 解析器p
-     * @param exceptionMapper 异常转换器
-     */
-    public static <R> Parser<R> fatal(Parser<R> p, Function<Cursor, RuntimeException> exceptionMapper) {
-        return fatal(p, (c, e) -> exceptionMapper.apply(c));
-    }
-
-    /**
-     * <p>当解析器p抛出ParseException时，转化成FatalParseException重新抛出，并携带错误消息msg</p>
-     * <p>FatalParseException不会被or和oneOf组合子捕获</p>
-     * @param p 解析器p
-     * @param msg 错误消息
-     */
-    public static <R> Parser<R> fatal(Parser<R> p, String msg) {
-        return fatal(p, c -> new FatalParseException(c, msg));
-    }
-
-    /**
-     * <p>当解析器p抛出ParseException时，转化成FatalParseException重新抛出，并携带ParseException的错误消息</p>
-     * @param p 解析器p
-     */
-    public static <R> Parser<R> fatal(Parser<R> p) {
-        return fatal(p, (c, e) -> new FatalParseException(c, e.getMsg()));
     }
 }

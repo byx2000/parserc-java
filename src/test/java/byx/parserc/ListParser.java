@@ -1,5 +1,6 @@
 package byx.parserc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -27,11 +28,20 @@ public class ListParser {
             string.mapTo(Object.class),
             lazy(() -> ListParser.list).mapTo(Object.class)
     );
-    private static final Parser<List<Object>> list = skip(lp).and(list(comma, listItem).opt(Collections.emptyList())).skip(rp);
+    private static final Parser<List<Object>> itemList = listItem.and(skip(comma).and(listItem).many())
+            .map(r -> reduceList(r.getFirst(), r.getSecond()));
+    private static final Parser<List<Object>> list = skip(lp).and(itemList.opt(Collections.emptyList())).skip(rp);
     private static final Parser<List<Object>> parser = list.end();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
+    }
+
+    private static <T> List<T> reduceList(T first, List<T> remain) {
+        List<T> list = new ArrayList<>();
+        list.add(first);
+        list.addAll(remain);
+        return list;
     }
 
     public static List<Object> parse(String s) {

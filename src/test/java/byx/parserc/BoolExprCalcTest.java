@@ -1,6 +1,5 @@
 package byx.parserc;
 
-import byx.parserc.exception.FatalParseException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,15 +26,15 @@ public class BoolExprCalcTest {
         assertFalse(BoolExprCalc.eval("|(&(t,f,t),!(t))"));
         assertTrue(BoolExprCalc.eval("!(&(!(t),&(f),|(f)))"));
 
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("a"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("ff"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("ft"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("&f,t"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("|(f,t))"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("+(t,f)"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("!(t,t)"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("&(f t)"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&((f),|(f)))"));
-        assertThrows(FatalParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&(f),|(f))))"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("a"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("ff"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("ft"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("&f,t"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("|(f,t))"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("+(t,f)"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("!(t,t)"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("&(f t)"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&((f),|(f)))"));
+        assertThrows(MyParseException.class, () -> BoolExprCalc.eval("!(&(!(t),&(f),|(f))))"));
     }
 }
