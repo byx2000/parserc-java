@@ -253,7 +253,7 @@ public class Parsers {
         return input -> {
             for (Parser<?> p : parsers) {
                 try {
-                    return p.mapTo(Object.class).parse(input);
+                    return p.asType(Object.class).parse(input);
                 } catch (ParseException ignored) {}
             }
             throw new ParseException(input, "no parser available");

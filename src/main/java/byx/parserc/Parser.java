@@ -117,7 +117,7 @@ public interface Parser<R> {
      * 将当前解析器的结果强制转换为指定类型
      * @param type 类型
      */
-    default <R2> Parser<R2> mapTo(Class<R2> type) {
+    default <R2> Parser<R2> asType(Class<R2> type) {
         return this.map(type::cast);
     }
 
