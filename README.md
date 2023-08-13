@@ -5,7 +5,10 @@ parserc-java是用java实现的解析器组合子（Parser Combinator）库，�
 ## 计算器示例
 
 ```java
-public class ExprCalc {
+/**
+ * 表达式计算器
+ */
+class ExprCalc {
     private static final Parser<?> w = chs(' ', '\t', '\r', '\n');
     private static final Parser<?> ws = w.many();
     private static final Parser<?> digit = range('0', '9');
@@ -19,19 +22,12 @@ public class ExprCalc {
     private static final Parser<Double> integer = digits.map(Double::parseDouble);
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ExprCalc::join).map(Double::parseDouble);
     private static final Parser<Double> number = decimal.or(integer).surround(ws);
-    private static final Parser<Double> bracketExpr = skip(lp).and(lazy(ExprCalc::getExpr)).skip(rp);
-    private static final Parser<Double> negExpr = skip(sub).and(lazy(ExprCalc::getFact)).map(e -> -e);
-    private static final Parser<Double> fact = oneOf(number, bracketExpr, negExpr);
+    private static final Parser<Double> bracketExpr = skip(lp).and(lazy(() -> ExprCalc.expr)).skip(rp);
+    private static final Parser<Double> negFact = skip(sub).and(lazy(() -> ExprCalc.fact)).map(e -> -e);
+    private static final Parser<Double> fact = oneOf(number, bracketExpr, negFact);
     private static final Parser<Double> term = fact.and(mul.or(div).and(fact).many()).map(ExprCalc::calc);
     private static final Parser<Double> expr = term.and(add.or(sub).and(term).many()).map(ExprCalc::calc);
-
-    private static Parser<Double> getFact() {
-        return fact;
-    }
-
-    private static Parser<Double> getExpr() {
-        return expr;
-    }
+    private static final Parser<Double> parser = expr.end();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
@@ -58,14 +54,8 @@ public class ExprCalc {
         return res;
     }
 
-    public static Double eval(String cursor) {
-        return expr.parse(cursor);
-    }
-}
-
-public class Main {
-    public static void main(String[] args) {
-        System.out.println(ExprCalc.eval("77.58 * (6 / 3.14 + 55.2234) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5))"));
+    public static Double eval(String input) {
+        return parser.parse(input);
     }
 }
 ```
@@ -73,7 +63,10 @@ public class Main {
 ## JSON示例
 
 ```java
-public class JsonParser {
+/**
+ * json解析器
+ */
+class JsonParser {
     private static final Parser<Character> w = chs(' ', '\t', '\n', '\r');
     private static final Parser<List<Character>> ws = w.many();
     private static final Parser<String> digit = range('0', '9').map(Objects::toString);
@@ -90,21 +83,14 @@ public class JsonParser {
     private static final Parser<Character> comma = ch(',').surround(ws);
     private static final Parser<Object> lazyJsonObj = lazy(() -> JsonParser.jsonObj);
     private static final Parser<List<Object>> jsonObjList = lazyJsonObj.and(skip(comma).and(lazyJsonObj).many())
-            .map(r -> reduceList(r.getFirst(), r.getSecond()));
+        .map(r -> reduceList(r.getFirst(), r.getSecond()));
     private static final Parser<List<Object>> arr = skip(arrStart).and(jsonObjList.opt(Collections.emptyList())).skip(arrEnd);
     private static final Parser<Pair<String, Object>> pair = string.skip(colon).and(lazyJsonObj);
     private static final Parser<List<Pair<String, Object>>> pairList = pair.and(skip(comma).and(pair).many())
-            .map(r -> reduceList(r.getFirst(), r.getSecond()));
+        .map(r -> reduceList(r.getFirst(), r.getSecond()));
     private static final Parser<Map<String, Object>> obj = skip(objStart).and(pairList.opt(Collections.emptyList())).skip(objEnd)
-            .map(ps -> ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-    private static final Parser<Object> jsonObj = oneOf(
-            decimal.mapTo(Object.class),
-            integer.mapTo(Object.class),
-            string.mapTo(Object.class),
-            bool.mapTo(Object.class),
-            arr.mapTo(Object.class),
-            obj.mapTo(Object.class)
-    );
+        .map(ps -> ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+    private static final Parser<Object> jsonObj = oneOf(decimal, integer, string, bool, arr, obj);
     private static final Parser<Object> parser = jsonObj.end();
 
     private static String join(List<?> list) {

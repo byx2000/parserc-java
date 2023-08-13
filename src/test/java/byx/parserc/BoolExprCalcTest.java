@@ -65,14 +65,14 @@ class BoolExprCalc {
     private static final Parser<Boolean> parser = boolExpr.skip(end()
         .fatal(c -> new MyParseException("redundant character at the end of input")));
 
-    public static Boolean eval(String s) {
-        return parser.parse(s);
-    }
-
     private static <T> List<T> reduceList(T first, List<T> remain) {
         List<T> list = new ArrayList<>();
         list.add(first);
         list.addAll(remain);
         return list;
+    }
+
+    public static Boolean eval(String s) {
+        return parser.parse(s);
     }
 }

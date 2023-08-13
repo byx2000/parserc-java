@@ -36,22 +36,22 @@ public class TokenizerTest {
         assertEquals(List.of(
                 new Token(TokenType.Identifier, "var"),
                 new Token(TokenType.Identifier, "a"),
-                new Token(TokenType.Add, "="),
+                new Token(TokenType.Assign, "="),
                 new Token(TokenType.Integer, "123"),
                 new Token(TokenType.Semicolon, ";"),
                 new Token(TokenType.Identifier, "var"),
                 new Token(TokenType.Identifier, "b"),
-                new Token(TokenType.Add, "="),
+                new Token(TokenType.Assign, "="),
                 new Token(TokenType.Decimal, "3.14"),
                 new Token(TokenType.Semicolon, ";"),
                 new Token(TokenType.Identifier, "var"),
                 new Token(TokenType.Identifier, "c"),
-                new Token(TokenType.Add, "="),
+                new Token(TokenType.Assign, "="),
                 new Token(TokenType.String, "hello"),
                 new Token(TokenType.Semicolon, ";"),
                 new Token(TokenType.Identifier, "var"),
                 new Token(TokenType.Identifier, "d"),
-                new Token(TokenType.Add, "="),
+                new Token(TokenType.Assign, "="),
                 new Token(TokenType.OpenSquareBracket, "["),
                 new Token(TokenType.Integer, "1"),
                 new Token(TokenType.Comma, ","),
@@ -60,7 +60,7 @@ public class TokenizerTest {
                 new Token(TokenType.Decimal, "3.14"),
                 new Token(TokenType.Comma, ","),
                 new Token(TokenType.String, "hello"),
-                new Token(TokenType.CloseParentheses, "]"),
+                new Token(TokenType.CloseSquareBracket, "]"),
                 new Token(TokenType.Semicolon, ";"),
                 new Token(TokenType.Identifier, "function"),
                 new Token(TokenType.Identifier, "fib"),
@@ -71,11 +71,11 @@ public class TokenizerTest {
                 new Token(TokenType.Identifier, "if"),
                 new Token(TokenType.OpenParentheses, "("),
                 new Token(TokenType.Identifier, "n"),
-                new Token(TokenType.Add, "=="),
+                new Token(TokenType.Equal, "=="),
                 new Token(TokenType.Integer, "1"),
-                new Token(TokenType.Add, "||"),
+                new Token(TokenType.Or, "||"),
                 new Token(TokenType.Identifier, "n"),
-                new Token(TokenType.Add, "=="),
+                new Token(TokenType.Equal, "=="),
                 new Token(TokenType.Integer, "2"),
                 new Token(TokenType.CloseParentheses, ")"),
                 new Token(TokenType.OpenCurlyBraces, "{"),
@@ -87,14 +87,14 @@ public class TokenizerTest {
                 new Token(TokenType.Identifier, "fib"),
                 new Token(TokenType.OpenParentheses, "("),
                 new Token(TokenType.Identifier, "n"),
-                new Token(TokenType.Add, "-"),
+                new Token(TokenType.Sub, "-"),
                 new Token(TokenType.Integer, "1"),
                 new Token(TokenType.CloseParentheses, ")"),
                 new Token(TokenType.Add, "+"),
                 new Token(TokenType.Identifier, "fib"),
                 new Token(TokenType.OpenParentheses, "("),
                 new Token(TokenType.Identifier, "n"),
-                new Token(TokenType.Add, "-"),
+                new Token(TokenType.Sub, "-"),
                 new Token(TokenType.Integer, "2"),
                 new Token(TokenType.CloseParentheses, ")"),
                 new Token(TokenType.Semicolon, ";"),
@@ -189,22 +189,22 @@ class Tokenizer {
     private static final Parser<Token> string = skip(ch('\'')).and(not('\'').many()).skip(ch('\''))
         .map(r -> new Token(TokenType.String, join(r)));
     private static final Parser<Token> add = createTokenParser(TokenType.Add, "+");
-    private static final Parser<Token> sub = createTokenParser(TokenType.Add, "-");
-    private static final Parser<Token> mul = createTokenParser(TokenType.Add, "*");
-    private static final Parser<Token> div = createTokenParser(TokenType.Add, "/");
-    private static final Parser<Token> and = createTokenParser(TokenType.Add, "&&");
-    private static final Parser<Token> or = createTokenParser(TokenType.Add, "||");
-    private static final Parser<Token> assign = createTokenParser(TokenType.Add, "=");
-    private static final Parser<Token> equal = createTokenParser(TokenType.Add, "==");
+    private static final Parser<Token> sub = createTokenParser(TokenType.Sub, "-");
+    private static final Parser<Token> mul = createTokenParser(TokenType.Mul, "*");
+    private static final Parser<Token> div = createTokenParser(TokenType.Div, "/");
+    private static final Parser<Token> and = createTokenParser(TokenType.And, "&&");
+    private static final Parser<Token> or = createTokenParser(TokenType.Or, "||");
+    private static final Parser<Token> assign = createTokenParser(TokenType.Assign, "=");
+    private static final Parser<Token> equal = createTokenParser(TokenType.Equal, "==");
     private static final Parser<Token> arrow = createTokenParser(TokenType.Arrow, "=>");
-    private static final Parser<Token> if_ = createTokenParser(TokenType.Add, "if");
-    private static final Parser<Token> for_ = createTokenParser(TokenType.Add, "for");
-    private static final Parser<Token> var = createTokenParser(TokenType.Add, "var");
-    private static final Parser<Token> function = createTokenParser(TokenType.Add, "function");
+    private static final Parser<Token> if_ = createTokenParser(TokenType.If, "if");
+    private static final Parser<Token> for_ = createTokenParser(TokenType.For, "for");
+    private static final Parser<Token> var = createTokenParser(TokenType.Var, "var");
+    private static final Parser<Token> function = createTokenParser(TokenType.Function, "function");
     private static final Parser<Token> openParentheses = createTokenParser(TokenType.OpenParentheses, "(");
     private static final Parser<Token> closeParentheses = createTokenParser(TokenType.CloseParentheses, ")");
     private static final Parser<Token> openSquareBracket = createTokenParser(TokenType.OpenSquareBracket, "[");
-    private static final Parser<Token> closeSquareBracket = createTokenParser(TokenType.CloseParentheses, "]");
+    private static final Parser<Token> closeSquareBracket = createTokenParser(TokenType.CloseSquareBracket, "]");
     private static final Parser<Token> openCurlyBraces = createTokenParser(TokenType.OpenCurlyBraces, "{");
     private static final Parser<Token> closeCurlyBraces = createTokenParser(TokenType.CloseCurlyBraces, "}");
     private static final Parser<Token> semi = createTokenParser(TokenType.Semicolon, ";");

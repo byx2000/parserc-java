@@ -119,7 +119,7 @@ class JsonParser {
         return list;
     }
 
-    public static Object parse(String input) throws ParseException {
+    public static Object parse(String input) {
         return parser.parse(input);
     }
 }
