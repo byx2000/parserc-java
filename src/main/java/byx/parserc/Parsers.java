@@ -239,21 +239,12 @@ public class Parsers {
      * @param parsers 解析器数组
      */
     @SafeVarargs
-    public static <R> Parser<R> oneOf(Parser<R>... parsers) {
-        return Arrays.stream(parsers).reduce(fail("no parser available"), Parser::or);
-    }
-
-    /**
-     * <p>依次尝试应用parsers中的解析器，如果成功则返回其解析结果</p>
-     * <p>parsers中的解析器可以是不同的类型</p>
-     * <p>如果所有解析器都解析失败，则解析失败</p>
-     * @param parsers 解析器数组
-     */
-    public static Parser<Object> alt(Parser<?>... parsers) {
+    @SuppressWarnings("unchecked")
+    public static <R> Parser<R> oneOf(Parser<? extends R>... parsers) {
         return input -> {
-            for (Parser<?> p : parsers) {
+            for (Parser<? extends R> p : parsers) {
                 try {
-                    return p.asType(Object.class).parse(input);
+                    return (ParseResult<R>) p.parse(input);
                 } catch (ParseException ignored) {}
             }
             throw new ParseException(input, "no parser available");

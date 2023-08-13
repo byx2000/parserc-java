@@ -349,8 +349,8 @@ public class ParsercTest {
     }
 
     @Test
-    public void testAlt() {
-        Parser<Object> p = alt(str("hello"), ch('a'), ch('b'));
+    public void testOneOf4() {
+        Parser<Object> p = oneOf(str("hello"), ch('a'), ch('b'));
         verifyParseResult(p.parse(new Cursor("hello")), "hello", 0, 5);
         verifyParseResult(p.parse(new Cursor("a")), 'a', 0, 1);
         verifyParseResult(p.parse(new Cursor("b")), 'b', 0, 1);

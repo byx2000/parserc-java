@@ -114,29 +114,24 @@ public interface Parser<R> {
     }
 
     /**
-     * 将当前解析器的结果强制转换为指定类型
-     * @param type 类型
-     */
-    default <R2> Parser<R2> asType(Class<R2> type) {
-        return this.map(type::cast);
-    }
-
-    /**
      * 连续应用当前解析器零次或多次，直到失败
      */
     default Parser<List<R>> many() {
         return cursor -> {
             Cursor oldCursor = cursor;
             List<R> result = new ArrayList<>();
-            try {
-                while (true) {
+
+            while (true) {
+                try {
                     ParseResult<R> r = this.parse(cursor);
                     result.add(r.getResult());
                     cursor = r.getRemain();
+                } catch (ParseException e) {
+                    break;
                 }
-            } catch (ParseException e) {
-                return new ParseResult<>(result, oldCursor, cursor);
             }
+
+            return new ParseResult<>(result, oldCursor, cursor);
         };
     }
 

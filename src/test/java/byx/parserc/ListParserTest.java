@@ -48,12 +48,7 @@ class ListParser {
     private static final Parser<Character> lp = ch('[').surround(ws);
     private static final Parser<Character> rp = ch(']').surround(ws);
     private static final Parser<Character> comma = ch(',').surround(ws);
-    private static final Parser<Object> listItem = oneOf(
-        decimal.asType(Object.class),
-        integer.asType(Object.class),
-        string.asType(Object.class),
-        lazy(() -> ListParser.list).asType(Object.class)
-    );
+    private static final Parser<Object> listItem = oneOf(decimal, integer, string, lazy(() -> ListParser.list));
     private static final Parser<List<Object>> itemList = listItem.and(skip(comma).and(listItem).many())
         .map(r -> reduceList(r.getFirst(), r.getSecond()));
     private static final Parser<List<Object>> list = skip(lp).and(itemList.opt(Collections.emptyList())).skip(rp);

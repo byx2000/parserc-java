@@ -105,14 +105,7 @@ class JsonParser {
         .map(r -> reduceList(r.getFirst(), r.getSecond()));
     private static final Parser<Map<String, Object>> obj = skip(objStart).and(pairList.opt(Collections.emptyList())).skip(objEnd)
         .map(ps -> ps.stream().collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-    private static final Parser<Object> jsonObj = oneOf(
-        decimal.asType(Object.class),
-        integer.asType(Object.class),
-        string.asType(Object.class),
-        bool.asType(Object.class),
-        arr.asType(Object.class),
-        obj.asType(Object.class)
-    );
+    private static final Parser<Object> jsonObj = oneOf(decimal, integer, string, bool, arr, obj);
     private static final Parser<Object> parser = jsonObj.end();
 
     private static String join(List<?> list) {
