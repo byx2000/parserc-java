@@ -38,16 +38,14 @@ public class ListParserTest {
  * 列表解析器
  */
 class ListParser {
-    private static final Parser<Character> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<List<Character>> ws = w.many();
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<String> digits = digit.many1().map(ListParser::join);
-    private static final Parser<Integer> integer = digits.map(Integer::parseInt).surround(ws);
+    private static final Parser<Integer> integer = digits.map(Integer::parseInt).trim();
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ListParser::join).map(Double::parseDouble);
     private static final Parser<String> string = skip(ch('\'')).and(not('\'').many()).skip(ch('\'')).map(ListParser::join);
-    private static final Parser<Character> lp = ch('[').surround(ws);
-    private static final Parser<Character> rp = ch(']').surround(ws);
-    private static final Parser<Character> comma = ch(',').surround(ws);
+    private static final Parser<Character> lp = ch('[').trim();
+    private static final Parser<Character> rp = ch(']').trim();
+    private static final Parser<Character> comma = ch(',').trim();
     private static final Parser<Object> listItem = oneOf(decimal, integer, string, lazy(() -> ListParser.list));
     private static final Parser<List<Object>> itemList = listItem.and(skip(comma).and(listItem).many())
         .map(r -> reduceList(r.getFirst(), r.getSecond()));

@@ -48,19 +48,17 @@ public class ExprCalcTest {
  * 表达式计算器
  */
 class ExprCalc {
-    private static final Parser<?> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<?> ws = w.many();
     private static final Parser<?> digit = range('0', '9');
-    private static final Parser<Character> add = ch('+').surround(ws);
-    private static final Parser<Character> sub = ch('-').surround(ws);
-    private static final Parser<Character> mul = ch('*').surround(ws);
-    private static final Parser<Character> div = ch('/').surround(ws);
-    private static final Parser<Character> lp = ch('(').surround(ws);
-    private static final Parser<Character> rp = ch(')').surround(ws);
+    private static final Parser<Character> add = ch('+').trim();
+    private static final Parser<Character> sub = ch('-').trim();
+    private static final Parser<Character> mul = ch('*').trim();
+    private static final Parser<Character> div = ch('/').trim();
+    private static final Parser<Character> lp = ch('(').trim();
+    private static final Parser<Character> rp = ch(')').trim();
     private static final Parser<String> digits = digit.many1().map(ExprCalc::join);
     private static final Parser<Double> integer = digits.map(Double::parseDouble);
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ExprCalc::join).map(Double::parseDouble);
-    private static final Parser<Double> number = decimal.or(integer).surround(ws);
+    private static final Parser<Double> number = decimal.or(integer).trim();
     private static final Parser<Double> bracketExpr = skip(lp).and(lazy(() -> ExprCalc.expr)).skip(rp);
     private static final Parser<Double> negFact = skip(sub).and(lazy(() -> ExprCalc.fact)).map(e -> -e);
     private static final Parser<Double> fact = oneOf(number, bracketExpr, negFact);

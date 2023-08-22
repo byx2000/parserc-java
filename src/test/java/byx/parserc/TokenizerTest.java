@@ -175,8 +175,6 @@ class Tokenizer {
         Comma
     }
 
-    private static final Parser<Character> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<List<Character>> ws = w.many();
     private static final Parser<Character> alpha = range('a', 'z').or(range('A', 'Z'));
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<Character> underline = ch('_');
@@ -218,7 +216,7 @@ class Tokenizer {
         if_, for_, var, function,
         openParentheses, closeParentheses, openSquareBracket, closeSquareBracket, openCurlyBraces, closeCurlyBraces,
         semi, comma
-    ).surround(ws).many();
+    ).trim().many();
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());

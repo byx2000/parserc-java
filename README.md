@@ -9,19 +9,17 @@ parserc-java是用java实现的解析器组合子（Parser Combinator）库，�
  * 表达式计算器
  */
 class ExprCalc {
-    private static final Parser<?> w = chs(' ', '\t', '\r', '\n');
-    private static final Parser<?> ws = w.many();
     private static final Parser<?> digit = range('0', '9');
-    private static final Parser<Character> add = ch('+').surround(ws);
-    private static final Parser<Character> sub = ch('-').surround(ws);
-    private static final Parser<Character> mul = ch('*').surround(ws);
-    private static final Parser<Character> div = ch('/').surround(ws);
-    private static final Parser<Character> lp = ch('(').surround(ws);
-    private static final Parser<Character> rp = ch(')').surround(ws);
+    private static final Parser<Character> add = ch('+').trim();
+    private static final Parser<Character> sub = ch('-').trim();
+    private static final Parser<Character> mul = ch('*').trim();
+    private static final Parser<Character> div = ch('/').trim();
+    private static final Parser<Character> lp = ch('(').trim();
+    private static final Parser<Character> rp = ch(')').trim();
     private static final Parser<String> digits = digit.many1().map(ExprCalc::join);
     private static final Parser<Double> integer = digits.map(Double::parseDouble);
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(ExprCalc::join).map(Double::parseDouble);
-    private static final Parser<Double> number = decimal.or(integer).surround(ws);
+    private static final Parser<Double> number = decimal.or(integer).trim();
     private static final Parser<Double> bracketExpr = skip(lp).and(lazy(() -> ExprCalc.expr)).skip(rp);
     private static final Parser<Double> negFact = skip(sub).and(lazy(() -> ExprCalc.fact)).map(e -> -e);
     private static final Parser<Double> fact = oneOf(number, bracketExpr, negFact);
@@ -67,20 +65,18 @@ class ExprCalc {
  * json解析器
  */
 class JsonParser {
-    private static final Parser<Character> w = chs(' ', '\t', '\n', '\r');
-    private static final Parser<List<Character>> ws = w.many();
     private static final Parser<String> digit = range('0', '9').map(Objects::toString);
     private static final Parser<String> digits = digit.many1().map(JsonParser::join);
-    private static final Parser<Integer> integer = digits.map(Integer::parseInt).surround(ws);
+    private static final Parser<Integer> integer = digits.map(Integer::parseInt).trim();
     private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(JsonParser::join).map(Double::parseDouble);
     private static final Parser<String> string = skip(ch('"')).and(not('"').many()).skip(ch('"')).map(JsonParser::join);
-    private static final Parser<Boolean> bool = strs("true", "false").map(Boolean::parseBoolean).surround(ws);
-    private static final Parser<Character> objStart = ch('{').surround(ws);
-    private static final Parser<Character> objEnd = ch('}').surround(ws);
-    private static final Parser<Character> arrStart = ch('[').surround(ws);
-    private static final Parser<Character> arrEnd = ch(']').surround(ws);
-    private static final Parser<Character> colon = ch(':').surround(ws);
-    private static final Parser<Character> comma = ch(',').surround(ws);
+    private static final Parser<Boolean> bool = strs("true", "false").map(Boolean::parseBoolean).trim();
+    private static final Parser<Character> objStart = ch('{').trim();
+    private static final Parser<Character> objEnd = ch('}').trim();
+    private static final Parser<Character> arrStart = ch('[').trim();
+    private static final Parser<Character> arrEnd = ch(']').trim();
+    private static final Parser<Character> colon = ch(':').trim();
+    private static final Parser<Character> comma = ch(',').trim();
     private static final Parser<Object> lazyJsonObj = lazy(() -> JsonParser.jsonObj);
     private static final Parser<List<Object>> jsonObjList = lazyJsonObj.and(skip(comma).and(lazyJsonObj).many())
         .map(r -> reduceList(r.getFirst(), r.getSecond()));

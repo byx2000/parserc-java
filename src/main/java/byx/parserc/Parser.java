@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static byx.parserc.Parsers.chs;
+
 /**
  * 解析器
  * @param <R> 解析结果类型
@@ -263,5 +265,12 @@ public interface Parser<R> {
      */
     default Parser<R> notFollow(Parser<?> predicate) {
         return this.skip(Parsers.not(predicate));
+    }
+
+    /**
+     * 在当前解析器前后加上空白符
+     */
+    default Parser<R> trim() {
+        return this.surround(chs(' ', '\t', '\n', '\r').many());
     }
 }
