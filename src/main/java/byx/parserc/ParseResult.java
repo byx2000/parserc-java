@@ -6,12 +6,10 @@ package byx.parserc;
  */
 public class ParseResult<R> {
     private final R result;
-    private final Cursor before;
     private final Cursor remain;
 
-    public ParseResult(R result, Cursor before, Cursor remain) {
+    public ParseResult(R result, Cursor remain) {
         this.result = result;
-        this.before = before;
         this.remain = remain;
     }
 
@@ -20,13 +18,6 @@ public class ParseResult<R> {
      */
     public R getResult() {
         return result;
-    }
-
-    /**
-     * 获取解析前输入
-     */
-    public Cursor getBefore() {
-        return before;
     }
 
     /**
