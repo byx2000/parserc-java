@@ -213,13 +213,14 @@ public interface Parser<R> {
     }
 
     /**
-     * 首先应用当前解析器，然后调用flatMap生成下一个解析器，再接着应用下一个解析器
-     * @param flatMap 解析器生成器
+     * 首先应用当前解析器，然后调用mapper生成下一个解析器，再接着应用下一个解析器
+     * @param mapper 解析器生成器
      */
-    default <R2> Parser<R2> then(Function<ParseResult<R>, Parser<R2>> flatMap) {
+    default <R2> Parser<Pair<R, R2>> then(Function<ParseResult<R>, Parser<R2>> mapper) {
         return cursor -> {
-            ParseResult<R> r = this.parse(cursor);
-            return flatMap.apply(r).parse(r.getRemain());
+            ParseResult<R> r1 = this.parse(cursor);
+            ParseResult<R2> r2 = mapper.apply(r1).parse(r1.getRemain());
+            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), cursor, r2.getRemain());
         };
     }
 

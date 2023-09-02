@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static byx.parserc.Parsers.fail;
@@ -484,18 +483,18 @@ public class ParsercTest {
 
     @Test
     public void testThen() {
-        Set<String> keywords = Set.of("if", "else", "while", "for");
         Parser<Character> alpha = range('a', 'z').or(range('A', 'Z'));
-        Parser<Character> digit = range('0', '9');
-        Parser<Character> underline = ch('_');
-        Parser<String> identifier = oneOf(alpha, underline)
-                .and(oneOf(digit, alpha, underline).many())
-                .map(p -> p.getFirst() + p.getSecond().stream().map(Objects::toString).collect(Collectors.joining()))
-                .then(r -> keywords.contains(r.getResult())
-                        ? fail(input -> new MyParseException(r.getBefore(), "关键字不能作为标识符"))
-                        : success(r.getResult()));
-        assertEquals("nums", identifier.parse("nums"));
-        assertThrows(MyParseException.class, () -> identifier.parse("while"));
+        Parser<String> tagName = alpha.many1().map(this::join);
+        Parser<String> tagContent = not('<').many1().map(this::join);
+        Parser<Pair<String, String>> tag = skip(ch('<')).and(tagName).skip(ch('>'))
+            .then(r -> tagContent.skip(str("</").and(str(r.getResult())).and(">")));
+
+        assertEquals(new Pair<>("body", "content"), tag.parse("<body>content</body>"));
+        assertThrows(ParseException.class, () -> tag.parse("<aaa>bbb</ccc>"));
+    }
+
+    private String join(List<?> list) {
+        return list.stream().map(Objects::toString).collect(Collectors.joining(""));
     }
 
     @Test
