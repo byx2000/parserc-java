@@ -1,6 +1,6 @@
 package byx.parserc;
 
-import byx.parserc.exception.ParseException;
+import byx.parserc.exception.ParseInternalException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -24,13 +24,13 @@ public class ListParserTest {
         assertEquals(List.of(List.of(1, 2, 3)), ListParser.parse("[[1, 2, 3]]"));
         assertEquals(List.of(123, 3.14, "hello", List.of(1, 2, 3)), ListParser.parse("[123, 3.14, 'hello', [1, 2, 3]]"));
 
-        assertThrows(ParseException.class, () -> ListParser.parse("["));
-        assertThrows(ParseException.class, () -> ListParser.parse("]"));
-        assertThrows(ParseException.class, () -> ListParser.parse("[123, 3.14, 'hello'"));
-        assertThrows(ParseException.class, () -> ListParser.parse("123, 3.14, 'hello']"));
-        assertThrows(ParseException.class, () -> ListParser.parse("[[123, 3.14, 'hello']"));
-        assertThrows(ParseException.class, () -> ListParser.parse("[123, 3.14, 'hello']]"));
-        assertThrows(ParseException.class, () -> ListParser.parse("[123 3.14, 'hello']"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("["));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("]"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("[123, 3.14, 'hello'"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("123, 3.14, 'hello']"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("[[123, 3.14, 'hello']"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("[123, 3.14, 'hello']]"));
+        assertThrows(ParseInternalException.class, () -> ListParser.parse("[123 3.14, 'hello']"));
     }
 }
 
@@ -48,7 +48,7 @@ class ListParser {
     private static final Parser<Character> comma = ch(',').trim();
     private static final Parser<Object> listItem = oneOf(decimal, integer, string, lazy(() -> ListParser.list));
     private static final Parser<List<Object>> itemList = listItem.and(skip(comma).and(listItem).many())
-        .map(r -> reduceList(r.getFirst(), r.getSecond()));
+        .map(r -> reduceList(r.first(), r.second()));
     private static final Parser<List<Object>> list = skip(lp).and(itemList.opt(Collections.emptyList())).skip(rp);
     private static final Parser<List<Object>> parser = list.end();
 

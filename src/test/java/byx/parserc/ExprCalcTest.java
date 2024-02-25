@@ -1,6 +1,6 @@
 package byx.parserc;
 
-import byx.parserc.exception.ParseException;
+import byx.parserc.exception.ParseInternalException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ExprCalcTest {
     @Test
-    public void test() throws ParseException {
+    public void test() throws ParseInternalException {
         assertEquals(1.0, ExprCalc.eval("1"));
         assertEquals(1.0, ExprCalc.eval(" 1"));
         assertEquals(1.0, ExprCalc.eval("1\t"));
@@ -31,16 +31,16 @@ public class ExprCalcTest {
         assertEquals(2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5, ExprCalc.eval("2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5"));
         assertEquals(77.58 * (6 / 3.14 + 55.2234) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5)), ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  "));
 
-        assertThrows(ParseException.class, () -> ExprCalc.eval(""));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("abc"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("12.34.56"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("2+"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("-2+3-"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("2.5+*3/5"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("()"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("("));
-        assertThrows(ParseException.class, () -> ExprCalc.eval(")"));
-        assertThrows(ParseException.class, () -> ExprCalc.eval("2*(4+(3/5)"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval(""));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("abc"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("12.34.56"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2+"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("-2+3-"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2.5+*3/5"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("()"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("("));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval(")"));
+        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2*(4+(3/5)"));
     }
 }
 
@@ -71,20 +71,20 @@ class ExprCalc {
     }
 
     private static Double calc(Pair<Double, List<Pair<Character, Double>>> p) {
-        double res = p.getFirst();
-        for (Pair<Character, Double> pp : p.getSecond()) {
-            switch (pp.getFirst()) {
+        double res = p.first();
+        for (Pair<Character, Double> pp : p.second()) {
+            switch (pp.first()) {
                 case '+':
-                    res += pp.getSecond();
+                    res += pp.second();
                     break;
                 case '-':
-                    res -= pp.getSecond();
+                    res -= pp.second();
                     break;
                 case '*':
-                    res *= pp.getSecond();
+                    res *= pp.second();
                     break;
                 case '/':
-                    res /= pp.getSecond();
+                    res /= pp.second();
                     break;
             }
         }

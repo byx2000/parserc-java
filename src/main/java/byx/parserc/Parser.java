@@ -1,9 +1,10 @@
 package byx.parserc;
 
-import byx.parserc.exception.ParseException;
+import byx.parserc.exception.ParseInternalException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static byx.parserc.Parsers.chs;
@@ -14,19 +15,20 @@ import static byx.parserc.Parsers.chs;
  */
 public interface Parser<R> {
     /**
-     * 解析输入
-     * @param cursor 输入
+     * 解析字符串
+     * @param s 字符串
+     * @param index 当前位置
      * @return 解析结果
      */
-    ParseResult<R> parse(Cursor cursor);
+    ParseResult<R> parse(String s, int index);
 
     /**
      * 解析字符串
-     * @param s 输入字符串
+     * @param s 字符串
      * @return 解析结果
      */
     default R parse(String s) {
-        return parse(new Cursor(s)).getResult();
+        return parse(s, 0).result();
     }
 
     /**
@@ -35,10 +37,10 @@ public interface Parser<R> {
      * @param rhs 解析器2
      */
     default <R2> Parser<Pair<R, R2>> and(Parser<R2> rhs) {
-        return cursor -> {
-            ParseResult<R> r1 = this.parse(cursor);
-            ParseResult<R2> r2 = rhs.parse(r1.getRemain());
-            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), r2.getRemain());
+        return (s, index) -> {
+            ParseResult<R> r1 = this.parse(s, index);
+            ParseResult<R2> r2 = rhs.parse(s, r1.index());
+            return new ParseResult<>(new Pair<>(r1.result(), r2.result()), r2.index());
         };
     }
 
@@ -64,11 +66,11 @@ public interface Parser<R> {
      * @param rhs 解析器2
      */
     default Parser<R> or(Parser<R> rhs) {
-        return cursor -> {
+        return (s, index) -> {
             try {
-                return this.parse(cursor);
-            } catch (ParseException e) {
-                return rhs.parse(cursor);
+                return this.parse(s, index);
+            } catch (ParseInternalException e) {
+                return rhs.parse(s, index);
             }
         };
     }
@@ -78,9 +80,9 @@ public interface Parser<R> {
      * @param mapper 结果转换器
      */
     default <R2> Parser<R2> map(Function<R, R2> mapper) {
-        return cursor -> {
-            ParseResult<R> r = this.parse(cursor);
-            return new ParseResult<>(mapper.apply(r.getResult()), r.getRemain());
+        return (s, index) -> {
+            ParseResult<R> r = this.parse(s, index);
+            return new ParseResult<>(mapper.apply(r.result()), r.index());
         };
     }
 
@@ -98,29 +100,29 @@ public interface Parser<R> {
      * @param maxTimes 最大次数
      */
     default Parser<List<R>> repeat(int minTimes, int maxTimes) {
-        return cursor -> {
+        return (s, index) -> {
             List<R> result = new ArrayList<>();
             int times = 0;
 
             while (times < minTimes) {
-                ParseResult<R> r = this.parse(cursor);
-                result.add(r.getResult());
-                cursor = r.getRemain();
+                ParseResult<R> r = this.parse(s, index);
+                result.add(r.result());
+                index = r.index();
                 times++;
             }
 
             while (times < maxTimes || maxTimes < 0) {
                 try {
-                    ParseResult<R> r = this.parse(cursor);
-                    result.add(r.getResult());
-                    cursor = r.getRemain();
+                    ParseResult<R> r = this.parse(s, index);
+                    result.add(r.result());
+                    index = r.index();
                     times++;
-                } catch (ParseException e) {
+                } catch (ParseInternalException e) {
                     break;
                 }
             }
 
-            return new ParseResult<>(result, cursor);
+            return new ParseResult<>(result, index);
         };
     }
 
@@ -151,7 +153,7 @@ public interface Parser<R> {
      * @param rhs rhs
      */
     default <R2> Parser<R> skip(Parser<R2> rhs) {
-        return this.and(rhs).map(Pair::getFirst);
+        return this.and(rhs).map(Pair::first);
     }
 
     /**
@@ -183,11 +185,11 @@ public interface Parser<R> {
      * @param defaultResult 默认值
      */
     default Parser<R> opt(R defaultResult) {
-        return cursor -> {
+        return (s, index) -> {
             try {
-                return this.parse(cursor);
-            } catch (ParseException e) {
-                return new ParseResult<>(defaultResult, cursor);
+                return this.parse(s, index);
+            } catch (ParseInternalException e) {
+                return new ParseResult<>(defaultResult, index);
             }
         };
     }
@@ -196,11 +198,11 @@ public interface Parser<R> {
      * 首先应用当前解析器，然后调用mapper生成下一个解析器，再接着应用下一个解析器
      * @param mapper 解析器生成器
      */
-    default <R2> Parser<Pair<R, R2>> then(Function<ParseResult<R>, Parser<R2>> mapper) {
-        return cursor -> {
-            ParseResult<R> r1 = this.parse(cursor);
-            ParseResult<R2> r2 = mapper.apply(r1).parse(r1.getRemain());
-            return new ParseResult<>(new Pair<>(r1.getResult(), r2.getResult()), r2.getRemain());
+    default <R2> Parser<Pair<R, R2>> flatMap(Function<ParseResult<R>, Parser<R2>> mapper) {
+        return (s, index) -> {
+            ParseResult<R> r1 = this.parse(s, index);
+            ParseResult<R2> r2 = mapper.apply(r1).parse(s, r1.index());
+            return new ParseResult<>(new Pair<>(r1.result(), r2.result()), r2.index());
         };
     }
 
@@ -208,12 +210,12 @@ public interface Parser<R> {
      * 当前解析器抛出ParseException时，使用exceptionMapper转换异常并重新抛出
      * @param exceptionMapper 异常转换器
      */
-    default Parser<R> fatal(Function<Cursor, RuntimeException> exceptionMapper) {
-        return cursor -> {
+    default Parser<R> fatal(BiFunction<String, Integer, RuntimeException> exceptionMapper) {
+        return (s, index) -> {
             try {
-                return parse(cursor);
-            } catch (ParseException e) {
-                throw exceptionMapper.apply(cursor);
+                return parse(s, index);
+            } catch (ParseInternalException e) {
+                throw exceptionMapper.apply(s, index);
             }
         };
     }

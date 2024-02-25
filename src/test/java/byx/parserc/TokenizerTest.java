@@ -179,7 +179,7 @@ class Tokenizer {
     private static final Parser<Character> digit = range('0', '9');
     private static final Parser<Character> underline = ch('_');
     private static final Parser<Token> identifier = oneOf(alpha, underline).and(oneOf(digit, alpha, underline).many())
-        .map(p -> new Token(TokenType.Identifier, p.getFirst() + join(p.getSecond())));
+        .map(p -> new Token(TokenType.Identifier, p.first() + join(p.second())));
     private static final Parser<String> digits = digit.many1().map(Tokenizer::join);
     private static final Parser<Token> integer = digits.map(v -> new Token(TokenType.Integer, v));
     private static final Parser<Token> decimal = seq(digits, ch('.'), digits).map(Tokenizer::join)

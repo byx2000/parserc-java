@@ -1,6 +1,6 @@
 package byx.parserc;
 
-import byx.parserc.exception.ParseException;
+import byx.parserc.exception.ParseInternalException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -20,31 +20,29 @@ public class ParsercTest {
 
     @Test
     public void testFail() {
-        ParseException e1 = assertThrows(ParseException.class, () -> Parsers.fail("byx").parse("abc"));
-        assertTrue(e1.getMessage().contains("byx"));
-        assertThrows(ParseException.class, () -> Parsers.fail().parse("abc"));
+        assertThrows(ParseInternalException.class, () -> Parsers.fail().parse("abc"));
     }
 
     @Test
     public void testEnd() {
         assertNull(end().parse(""));
-        assertThrows(ParseException.class, () -> end().parse("abc"));
+        assertThrows(ParseInternalException.class, () -> end().parse("abc"));
     }
 
     @Test
     public void testCh1() {
         Parser<Character> p = ch(c -> c == 'a');
         assertEquals('a', p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("b"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testCh2() {
         Parser<Character> p = ch('a');
         assertEquals('a', p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("b"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -52,7 +50,7 @@ public class ParsercTest {
         Parser<Character> p = any();
         assertEquals('a', p.parse("a"));
         assertEquals('b', p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -61,9 +59,9 @@ public class ParsercTest {
         assertEquals('d', p.parse("d"));
         assertEquals('e', p.parse("e"));
         assertEquals('f', p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse("c"));
-        assertThrows(ParseException.class, () -> p.parse("g"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("c"));
+        assertThrows(ParseInternalException.class, () -> p.parse("g"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -72,9 +70,9 @@ public class ParsercTest {
         assertEquals('d', p.parse("d"));
         assertEquals('e', p.parse("e"));
         assertEquals('f', p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse("c"));
-        assertThrows(ParseException.class, () -> p.parse("g"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("c"));
+        assertThrows(ParseInternalException.class, () -> p.parse("g"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -83,41 +81,41 @@ public class ParsercTest {
         assertEquals('f', p.parse("f"));
         assertEquals('o', p.parse("o"));
         assertEquals('h', p.parse("h"));
-        assertThrows(ParseException.class, () -> p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("b"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testChs2() {
         Parser<Character> p = chs('f');
         assertEquals('f', p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("b"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testChs3() {
         Parser<Character> p = chs();
-        assertThrows(ParseException.class, () -> p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("b"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testNot1() {
         Parser<Character> p = not('f', 'o', 'h');
         assertEquals('b', p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse("o"));
-        assertThrows(ParseException.class, () -> p.parse("h"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("f"));
+        assertThrows(ParseInternalException.class, () -> p.parse("o"));
+        assertThrows(ParseInternalException.class, () -> p.parse("h"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testNot2() {
         Parser<Character> p = not('f');
         assertEquals('b', p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("f"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -125,17 +123,17 @@ public class ParsercTest {
         Parser<Character> p = not();
         assertEquals('b', p.parse("b"));
         assertEquals('f', p.parse("f"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testStr() {
         Parser<String> p = str("byx");
         assertEquals("byx", p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse("by"));
-        assertThrows(ParseException.class, () -> p.parse("bytb"));
-        assertThrows(ParseException.class, () -> p.parse("mnt"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("by"));
+        assertThrows(ParseInternalException.class, () -> p.parse("bytb"));
+        assertThrows(ParseInternalException.class, () -> p.parse("mnt"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -144,74 +142,74 @@ public class ParsercTest {
         assertEquals("apple", p.parse("apple"));
         assertEquals("amend", p.parse("amend"));
         assertEquals("byx", p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse("app"));
-        assertThrows(ParseException.class, () -> p.parse("bycd"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("app"));
+        assertThrows(ParseInternalException.class, () -> p.parse("bycd"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testStrs2() {
         Parser<String> p = strs("byx");
         assertEquals("byx", p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse("by"));
-        assertThrows(ParseException.class, () -> p.parse("bytb"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("by"));
+        assertThrows(ParseInternalException.class, () -> p.parse("bytb"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testStrs3() {
         Parser<String> p = strs();
-        assertThrows(ParseException.class, () -> p.parse("abc"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("abc"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testAnd1() {
         Parser<Pair<String, Character>> p = str("hello").and(ch('a'));
         assertEquals(new Pair<>("hello", 'a'), p.parse("helloa"));
-        assertThrows(ParseException.class, () -> p.parse("hellob"));
-        assertThrows(ParseException.class, () -> p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("hellob"));
+        assertThrows(ParseInternalException.class, () -> p.parse("byx"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testAnd2() {
         Parser<Pair<String, Character>> p = str("hello").and('a');
         assertEquals(new Pair<>("hello", 'a'), p.parse("helloa"));
-        assertThrows(ParseException.class, () -> p.parse("hellob"));
-        assertThrows(ParseException.class, () -> p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("hellob"));
+        assertThrows(ParseInternalException.class, () -> p.parse("byx"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testAnd3() {
         Parser<Pair<String, String>> p = str("hello").and("abc");
         assertEquals(new Pair<>("hello", "abc"), p.parse("helloabc"));
-        assertThrows(ParseException.class, () -> p.parse("helloxyz"));
-        assertThrows(ParseException.class, () -> p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("helloxyz"));
+        assertThrows(ParseInternalException.class, () -> p.parse("byx"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testSeq1() {
         Parser<List<Object>> p = seq(ch('a'), str("bcd"), ch('e'));
         assertEquals(List.of('a', "bcd", 'e'), p.parse("abcde"));
-        assertThrows(ParseException.class, () -> p.parse("abcdk"));
-        assertThrows(ParseException.class, () -> p.parse("amnpuk"));
-        assertThrows(ParseException.class, () -> p.parse("byx"));
-        assertThrows(ParseException.class, () -> p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("abc"));
-        assertThrows(ParseException.class, () -> p.parse("abcd"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("abcdk"));
+        assertThrows(ParseInternalException.class, () -> p.parse("amnpuk"));
+        assertThrows(ParseInternalException.class, () -> p.parse("byx"));
+        assertThrows(ParseInternalException.class, () -> p.parse("a"));
+        assertThrows(ParseInternalException.class, () -> p.parse("abc"));
+        assertThrows(ParseInternalException.class, () -> p.parse("abcd"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testSeq2() {
         Parser<List<Object>> p = seq(str("abc"));
         assertEquals(List.of("abc"), p.parse("abc"));
-        assertThrows(ParseException.class, () -> p.parse("axy"));
-        assertThrows(ParseException.class, () -> p.parse("ab"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("axy"));
+        assertThrows(ParseInternalException.class, () -> p.parse("ab"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -226,8 +224,8 @@ public class ParsercTest {
         Parser<Character> p = ch('a').or(ch('b'));
         assertEquals('a', p.parse("a"));
         assertEquals('b', p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse("x"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("x"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -236,23 +234,23 @@ public class ParsercTest {
         assertEquals('a', p.parse("a"));
         assertEquals('b', p.parse("b"));
         assertEquals('c', p.parse("c"));
-        assertThrows(ParseException.class, () -> p.parse("d"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("d"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testOneOf2() {
         Parser<Character> p = oneOf(ch('a'));
         assertEquals('a', p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("d"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("d"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testOneOf3() {
         Parser<Object> p = oneOf();
-        assertThrows(ParseException.class, () -> p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("a"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -261,15 +259,15 @@ public class ParsercTest {
         assertEquals("hello", p.parse("hello"));
         assertEquals('a', p.parse("a"));
         assertEquals('b', p.parse("b"));
-        assertThrows(ParseException.class, () -> p.parse("xyz"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("xyz"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testMap() {
         Parser<Integer> p = str("hello").map(String::length);
         assertEquals(5, p.parse("hello"));
-        assertThrows(ParseException.class, () -> p.parse("hi"));
+        assertThrows(ParseInternalException.class, () -> p.parse("hi"));
     }
 
     @Test
@@ -286,8 +284,8 @@ public class ParsercTest {
         Parser<List<Character>> p = ch('a').many1();
         assertEquals(List.of('a'), p.parse("a"));
         assertEquals(List.of('a', 'a', 'a'), p.parse("aaa"));
-        assertThrows(ParseException.class, () -> p.parse("bbb"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("bbb"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -298,18 +296,18 @@ public class ParsercTest {
         assertEquals(List.of('a', 'a', 'a', 'a', 'a'), p.parse("aaaaa"));
         assertEquals(List.of('a', 'a', 'a', 'a', 'a'), p.parse("aaaaaa"));
         assertEquals(new Pair<>(List.of('a', 'a', 'a', 'a', 'a'), 'a'), p.and('a').parse("aaaaaa"));
-        assertThrows(ParseException.class, () -> p.parse("aa"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("aa"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testRepeat2() {
         Parser<List<Character>> p = ch('a').repeat(3);
         assertEquals(List.of('a', 'a', 'a'), p.parse("aaa"));
-        assertThrows(ParseException.class, () -> p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("aa"));
-        assertThrows(ParseException.class, () -> p.parse("bbb"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("a"));
+        assertThrows(ParseInternalException.class, () -> p.parse("aa"));
+        assertThrows(ParseInternalException.class, () -> p.parse("bbb"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -336,22 +334,22 @@ public class ParsercTest {
     public void testSurround1() {
         Parser<Character> p = ch('a').surround(ch('('), ch(')'));
         assertEquals('a', p.parse("(a)"));
-        assertThrows(ParseException.class, () -> p.parse("(a"));
-        assertThrows(ParseException.class, () -> p.parse("a)"));
-        assertThrows(ParseException.class, () -> p.parse("a"));
-        assertThrows(ParseException.class, () -> p.parse("(b)"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("(a"));
+        assertThrows(ParseInternalException.class, () -> p.parse("a)"));
+        assertThrows(ParseInternalException.class, () -> p.parse("a"));
+        assertThrows(ParseInternalException.class, () -> p.parse("(b)"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
     public void testSurround2() {
         Parser<Character> p = ch('a').surround(str("***"));
         assertEquals('a', p.parse("***a***"));
-        assertThrows(ParseException.class, () -> p.parse("***a**"));
-        assertThrows(ParseException.class, () -> p.parse("*a***"));
-        assertThrows(ParseException.class, () -> p.parse("*a**"));
-        assertThrows(ParseException.class, () -> p.parse("***b***"));
-        assertThrows(ParseException.class, () -> p.parse(""));
+        assertThrows(ParseInternalException.class, () -> p.parse("***a**"));
+        assertThrows(ParseInternalException.class, () -> p.parse("*a***"));
+        assertThrows(ParseInternalException.class, () -> p.parse("*a**"));
+        assertThrows(ParseInternalException.class, () -> p.parse("***b***"));
+        assertThrows(ParseInternalException.class, () -> p.parse(""));
     }
 
     @Test
@@ -367,15 +365,15 @@ public class ParsercTest {
     }
 
     @Test
-    public void testThen() {
+    public void testFlatMap() {
         Parser<Character> alpha = range('a', 'z').or(range('A', 'Z'));
         Parser<String> tagName = alpha.many1().map(this::join);
         Parser<String> tagContent = not('<').many1().map(this::join);
         Parser<Pair<String, String>> tag = skip(ch('<')).and(tagName).skip(ch('>'))
-            .then(r -> tagContent.skip(str("</").and(str(r.getResult())).and(">")));
+            .flatMap(r -> tagContent.skip(str("</").and(str(r.result())).and(">")));
 
         assertEquals(new Pair<>("body", "content"), tag.parse("<body>content</body>"));
-        assertThrows(ParseException.class, () -> tag.parse("<aaa>bbb</ccc>"));
+        assertThrows(ParseInternalException.class, () -> tag.parse("<aaa>bbb</ccc>"));
     }
 
     private String join(List<?> list) {
@@ -386,19 +384,19 @@ public class ParsercTest {
     public void testFatal() {
         Parser<List<Object>> p1 = seq(
                 ch('a'),
-                ch('b').fatal(c -> new MyParseException("expected b"))
+                ch('b').fatal((s, i) -> new MyParseException("expected b"))
         );
         Parser<List<Object>> p2 = seq(
                 ch('b'),
-                ch('y').fatal(c -> new MyParseException("expected y")),
-                ch('c').fatal(c -> new MyParseException("expected c"))
+                ch('y').fatal((s, i) -> new MyParseException("expected y")),
+                ch('c').fatal((s, i) -> new MyParseException("expected c"))
         );
         Parser<List<Object>> p3 = seq(
                 ch('c'),
-                ch('m').fatal(c -> new MyParseException("expected m"))
+                ch('m').fatal((s, i) -> new MyParseException("expected m"))
         );
         Parser<List<Object>> p = oneOf(p1, p2, p3)
-                .fatal(c -> new MyParseException(c, "a or b or c"));
+                .fatal((s, i) -> new MyParseException(i, "a or b or c"));
         MyParseException e1 = assertThrowsExactly(MyParseException.class, () -> p.parse("ax"));
         assertTrue(e1.getMessage().contains("expected b"));
         MyParseException e2 = assertThrowsExactly(MyParseException.class, () -> p.parse("byx"));
@@ -409,20 +407,37 @@ public class ParsercTest {
         assertTrue(e4.getMessage().contains("expected m"));
         MyParseException e5 = assertThrowsExactly(MyParseException.class, () -> p.parse("dfagdf"));
         assertTrue(e5.getMessage().contains("a or b or c"));
-        assertEquals(0, e5.getCursor().index());
+        assertEquals(0, e5.getIndex());
     }
 
     @Test
     public void testExpect() {
         Parser<String> p = skip(expect(str("abc"))).and(str("abcde"));
         assertEquals("abcde", p.parse("abcde"));
-        assertThrows(ParseException.class, () -> p.parse("xyz"));
+        assertThrows(ParseInternalException.class, () -> p.parse("xyz"));
     }
 
     @Test
     public void testNot() {
         Parser<String> p = skip(not(str("abc"))).and(str("abxyz"));
         assertEquals("abxyz", p.parse("abxyz"));
-        assertThrows(ParseException.class, () -> p.parse("abcde"));
+        assertThrows(ParseInternalException.class, () -> p.parse("abcde"));
+    }
+}
+
+class MyParseException extends RuntimeException {
+    private final int index;
+
+    public MyParseException(int index, String msg) {
+        super(msg);
+        this.index = index;
+    }
+
+    public MyParseException(String msg) {
+        this(0, msg);
+    }
+
+    public int getIndex() {
+        return index;
     }
 }
