@@ -15,41 +15,9 @@ import java.util.stream.Collectors;
  */
 public class Parsers {
     /**
-     * 在当前位置解析成功，并返回指定解析结果
-     * @param result 结果
+     * 解析指定字符
+     * @param predicate 条件
      */
-    public static <R> Parser<R> success(R result) {
-        return (s, index) -> new ParseResult<>(result, index);
-    }
-
-    /**
-     * 在当前位置解析成功，并返回null作为解析结果
-     */
-    public static <R> Parser<R> success() {
-        return success(null);
-    }
-
-    /**
-     * 在当前位置抛出内部解析异常
-     */
-    public static <R> Parser<R> fail() {
-        return (s, index) -> {
-            throw ParseInternalException.INSTANCE;
-        };
-    }
-
-    /**
-     * 如果当前位置到达输入末尾，则返回null作为解析结果，否则抛出ParseException
-     */
-    public static <T> Parser<T> end() {
-        return (s, index) -> {
-            if (index != s.length()) {
-                throw ParseInternalException.INSTANCE;
-            }
-            return new ParseResult<>(null, index);
-        };
-    }
-
     public static Parser<Character> ch(Predicate<Character> predicate) {
         return (s, index) -> {
             if (index < s.length() && predicate.test(s.charAt(index))) {

@@ -6,6 +6,4 @@ package byx.parserc;
  * @param index 解析后的索引
  * @param <R> 结果类型
  */
-public record ParseResult<R>(R result, int index) {
-
-}
+public record ParseResult<R>(R result, int index) {}

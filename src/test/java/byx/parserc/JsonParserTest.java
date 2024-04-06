@@ -9,6 +9,57 @@ import java.util.stream.Collectors;
 import static byx.parserc.Parsers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * json解析器
+ */
+class JsonParser {
+    private static final Parser<Character> objStart = ch('{').trim();
+    private static final Parser<Character> objEnd = ch('}').trim();
+    private static final Parser<Character> arrStart = ch('[').trim();
+    private static final Parser<Character> arrEnd = ch(']').trim();
+    private static final Parser<Character> colon = ch(':').trim();
+    private static final Parser<Character> comma = ch(',').trim();
+    private static final Parser<Object> jsonObj = oneOf(
+        lazy(() -> JsonParser.decimal),
+        lazy(() -> JsonParser.integer),
+        lazy(() -> JsonParser.string),
+        lazy(() -> JsonParser.bool),
+        lazy(() -> JsonParser.arr),
+        lazy(() -> JsonParser.obj)
+    );
+    private static final Parser<String> digit = range('0', '9').map(Objects::toString);
+    private static final Parser<String> digits = digit.many1().map(JsonParser::join);
+    private static final Parser<Integer> integer = digits.map(Integer::parseInt).trim();
+    private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(JsonParser::join).map(Double::parseDouble);
+    private static final Parser<String> string = skip(ch('"')).and(not('"').many()).skip(ch('"')).map(JsonParser::join);
+    private static final Parser<Boolean> bool = strs("true", "false").map(Boolean::parseBoolean).trim();
+    private static final Parser<List<Object>> jsonObjList = jsonObj.and(skip(comma).and(jsonObj).many())
+        .map(r -> reduceList(r.first(), r.second()));
+    private static final Parser<List<Object>> arr = skip(arrStart).and(jsonObjList.opt(Collections.emptyList())).skip(arrEnd);
+    private static final Parser<Pair<String, Object>> pair = string.skip(colon).and(jsonObj);
+    private static final Parser<List<Pair<String, Object>>> pairList = pair.and(skip(comma).and(pair).many())
+        .map(r -> reduceList(r.first(), r.second()));
+    private static final Parser<Map<String, Object>> obj = skip(objStart).and(pairList.opt(Collections.emptyList())).skip(objEnd)
+        .map(ps -> ps.stream().collect(Collectors.toMap(Pair::first, Pair::second)));
+
+    private static final Parser<Object> parser = jsonObj;
+
+    private static String join(List<?> list) {
+        return list.stream().map(Objects::toString).collect(Collectors.joining(""));
+    }
+
+    private static <T> List<T> reduceList(T first, List<T> remain) {
+        List<T> list = new ArrayList<>();
+        list.add(first);
+        list.addAll(remain);
+        return list;
+    }
+
+    public static Object parse(String input) {
+        return parser.parse(input);
+    }
+}
+
 public class JsonParserTest {
     @Test
     public void test() throws ParseInternalException {
@@ -76,49 +127,5 @@ public class JsonParserTest {
         assertThrows(ParseInternalException.class, () -> JsonParser.parse("[{]}"));
         assertThrows(ParseInternalException.class, () -> JsonParser.parse("[100 200 300]"));
         assertThrows(ParseInternalException.class, () -> JsonParser.parse("[1,2,3],4"));
-    }
-}
-
-/**
- * json解析器
- */
-class JsonParser {
-    private static final Parser<String> digit = range('0', '9').map(Objects::toString);
-    private static final Parser<String> digits = digit.many1().map(JsonParser::join);
-    private static final Parser<Integer> integer = digits.map(Integer::parseInt).trim();
-    private static final Parser<Double> decimal = seq(digits, ch('.'), digits).map(JsonParser::join).map(Double::parseDouble);
-    private static final Parser<String> string = skip(ch('"')).and(not('"').many()).skip(ch('"')).map(JsonParser::join);
-    private static final Parser<Boolean> bool = strs("true", "false").map(Boolean::parseBoolean).trim();
-    private static final Parser<Character> objStart = ch('{').trim();
-    private static final Parser<Character> objEnd = ch('}').trim();
-    private static final Parser<Character> arrStart = ch('[').trim();
-    private static final Parser<Character> arrEnd = ch(']').trim();
-    private static final Parser<Character> colon = ch(':').trim();
-    private static final Parser<Character> comma = ch(',').trim();
-    private static final Parser<Object> lazyJsonObj = lazy(() -> JsonParser.jsonObj);
-    private static final Parser<List<Object>> jsonObjList = lazyJsonObj.and(skip(comma).and(lazyJsonObj).many())
-        .map(r -> reduceList(r.first(), r.second()));
-    private static final Parser<List<Object>> arr = skip(arrStart).and(jsonObjList.opt(Collections.emptyList())).skip(arrEnd);
-    private static final Parser<Pair<String, Object>> pair = string.skip(colon).and(lazyJsonObj);
-    private static final Parser<List<Pair<String, Object>>> pairList = pair.and(skip(comma).and(pair).many())
-        .map(r -> reduceList(r.first(), r.second()));
-    private static final Parser<Map<String, Object>> obj = skip(objStart).and(pairList.opt(Collections.emptyList())).skip(objEnd)
-        .map(ps -> ps.stream().collect(Collectors.toMap(Pair::first, Pair::second)));
-    private static final Parser<Object> jsonObj = oneOf(decimal, integer, string, bool, arr, obj);
-    private static final Parser<Object> parser = jsonObj.end();
-
-    private static String join(List<?> list) {
-        return list.stream().map(Objects::toString).collect(Collectors.joining(""));
-    }
-
-    private static <T> List<T> reduceList(T first, List<T> remain) {
-        List<T> list = new ArrayList<>();
-        list.add(first);
-        list.addAll(remain);
-        return list;
-    }
-
-    public static Object parse(String input) {
-        return parser.parse(input);
     }
 }

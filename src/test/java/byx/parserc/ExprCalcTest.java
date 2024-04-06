@@ -11,39 +11,6 @@ import static byx.parserc.Parsers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class ExprCalcTest {
-    @Test
-    public void test() throws ParseInternalException {
-        assertEquals(1.0, ExprCalc.eval("1"));
-        assertEquals(1.0, ExprCalc.eval(" 1"));
-        assertEquals(1.0, ExprCalc.eval("1\t"));
-        assertEquals(123.0, ExprCalc.eval("\n123"));
-        assertEquals(123.0, ExprCalc.eval("123 "));
-        assertEquals(3.14, ExprCalc.eval(" 3.14"));
-        assertEquals(-1.0, ExprCalc.eval("-1"));
-        assertEquals(-123.0, ExprCalc.eval("-123 "));
-        assertEquals(-3.14, ExprCalc.eval("-3.14 "));
-        assertEquals(2.0 + 3.0, ExprCalc.eval("2+3"));
-        assertEquals(5.2 - 7.56, ExprCalc.eval("5.2-7.56"));
-        assertEquals(123.456 * 67.89, ExprCalc.eval("123.456*67.89"));
-        assertEquals(0.78 / 10.4, ExprCalc.eval(" 0.78 / 10.4 "));
-        assertEquals((2.0 + 3) * (7 - 4.0), ExprCalc.eval("(2+3)*(7-4)"));
-        assertEquals(2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5, ExprCalc.eval("2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5"));
-        assertEquals(77.58 * (6 / 3.14 + 55.2234) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5)), ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  "));
-
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval(""));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("abc"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("12.34.56"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2+"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("-2+3-"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2.5+*3/5"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("()"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("("));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval(")"));
-        assertThrows(ParseInternalException.class, () -> ExprCalc.eval("2*(4+(3/5)"));
-    }
-}
-
 /**
  * 表达式计算器
  */
@@ -63,8 +30,8 @@ class ExprCalc {
     private static final Parser<Double> negFact = skip(sub).and(lazy(() -> ExprCalc.fact)).map(e -> -e);
     private static final Parser<Double> fact = oneOf(number, bracketExpr, negFact);
     private static final Parser<Double> term = fact.and(mul.or(div).and(fact).many()).map(ExprCalc::calc);
-    private static final Parser<Double> expr = term.and(add.or(sub).and(term).many()).map(ExprCalc::calc);
-    private static final Parser<Double> parser = expr.end();
+    private static final Parser<Double> expr = term.and(add.or(sub).and(term).many()).map(ExprCalc::calc)
+        .fatal(() -> new MyParseException("illegal arithmetic expr"));
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());
@@ -91,7 +58,44 @@ class ExprCalc {
         return res;
     }
 
-    public static Double eval(String input) {
-        return parser.parse(input);
+    public static Double eval(String s) {
+        ParseResult<Double> r = expr.parse(s, 0);
+        if (r.index() != s.length()) {
+            throw new MyParseException(s, r.index(), "redundant character at the end of expr");
+        }
+        return r.result();
+    }
+}
+
+public class ExprCalcTest {
+    @Test
+    public void test() throws ParseInternalException {
+        assertEquals(1.0, ExprCalc.eval("1"));
+        assertEquals(1.0, ExprCalc.eval(" 1"));
+        assertEquals(1.0, ExprCalc.eval("1\t"));
+        assertEquals(123.0, ExprCalc.eval("\n123"));
+        assertEquals(123.0, ExprCalc.eval("123 "));
+        assertEquals(3.14, ExprCalc.eval(" 3.14"));
+        assertEquals(-1.0, ExprCalc.eval("-1"));
+        assertEquals(-123.0, ExprCalc.eval("-123 "));
+        assertEquals(-3.14, ExprCalc.eval("-3.14 "));
+        assertEquals(2.0 + 3.0, ExprCalc.eval("2+3"));
+        assertEquals(5.2 - 7.56, ExprCalc.eval("5.2-7.56"));
+        assertEquals(123.456 * 67.89, ExprCalc.eval("123.456*67.89"));
+        assertEquals(0.78 / 10.4, ExprCalc.eval(" 0.78 / 10.4 "));
+        assertEquals((2.0 + 3) * (7 - 4.0), ExprCalc.eval("(2+3)*(7-4)"));
+        assertEquals(2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5, ExprCalc.eval("2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5"));
+        assertEquals(77.58 * (6 / 3.14 + 55.2234) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5)), ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  "));
+
+        assertThrows(MyParseException.class, () -> ExprCalc.eval(""));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("abc"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("12.34.56"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("2+"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("-2+3-"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("2.5+*3/5"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("()"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("("));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval(")"));
+        assertThrows(MyParseException.class, () -> ExprCalc.eval("2*(4+(3/5)"));
     }
 }

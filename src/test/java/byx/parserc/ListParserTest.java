@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static byx.parserc.Parsers.*;
-import static byx.parserc.Parsers.skip;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ListParserTest {
@@ -50,7 +49,7 @@ class ListParser {
     private static final Parser<List<Object>> itemList = listItem.and(skip(comma).and(listItem).many())
         .map(r -> reduceList(r.first(), r.second()));
     private static final Parser<List<Object>> list = skip(lp).and(itemList.opt(Collections.emptyList())).skip(rp);
-    private static final Parser<List<Object>> parser = list.end();
+    private static final Parser<List<Object>> parser = list;
 
     private static String join(List<?> list) {
         return list.stream().map(Objects::toString).collect(Collectors.joining());

@@ -13,23 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ParsercTest {
     @Test
-    public void testSuccess() {
-        assertEquals(123, success(123).parse("abc"));
-        assertNull(success().parse("abc"));
-    }
-
-    @Test
-    public void testFail() {
-        assertThrows(ParseInternalException.class, () -> Parsers.fail().parse("abc"));
-    }
-
-    @Test
-    public void testEnd() {
-        assertNull(end().parse(""));
-        assertThrows(ParseInternalException.class, () -> end().parse("abc"));
-    }
-
-    @Test
     public void testCh1() {
         Parser<Character> p = ch(c -> c == 'a');
         assertEquals('a', p.parse("a"));
@@ -215,7 +198,6 @@ public class ParsercTest {
     @Test
     public void testSeq3() {
         Parser<List<Object>> p = seq();
-        assertEquals(Collections.emptyList(), p.parse("abc"));
         assertEquals(Collections.emptyList(), p.parse(""));
     }
 
@@ -275,7 +257,6 @@ public class ParsercTest {
         Parser<List<Character>> p = ch('a').many();
         assertEquals(List.of('a'), p.parse("a"));
         assertEquals(List.of('a', 'a', 'a'), p.parse("aaa"));
-        assertEquals(Collections.emptyList(), p.parse("bbb"));
         assertEquals(Collections.emptyList(), p.parse(""));
     }
 
@@ -294,7 +275,6 @@ public class ParsercTest {
         assertEquals(List.of('a', 'a', 'a'), p.parse("aaa"));
         assertEquals(List.of('a', 'a', 'a', 'a'), p.parse("aaaa"));
         assertEquals(List.of('a', 'a', 'a', 'a', 'a'), p.parse("aaaaa"));
-        assertEquals(List.of('a', 'a', 'a', 'a', 'a'), p.parse("aaaaaa"));
         assertEquals(new Pair<>(List.of('a', 'a', 'a', 'a', 'a'), 'a'), p.and('a').parse("aaaaaa"));
         assertThrows(ParseInternalException.class, () -> p.parse("aa"));
         assertThrows(ParseInternalException.class, () -> p.parse(""));
@@ -314,7 +294,6 @@ public class ParsercTest {
     public void testOpt() {
         Parser<Character> p = ch('a').opt('x');
         assertEquals('a', p.parse("a"));
-        assertEquals('x', p.parse("b"));
         assertEquals('x', p.parse(""));
     }
 
@@ -396,7 +375,7 @@ public class ParsercTest {
                 ch('m').fatal((s, i) -> new MyParseException("expected m"))
         );
         Parser<List<Object>> p = oneOf(p1, p2, p3)
-                .fatal((s, i) -> new MyParseException(i, "a or b or c"));
+                .fatal((s, i) -> new MyParseException(s, i, "a or b or c"));
         MyParseException e1 = assertThrowsExactly(MyParseException.class, () -> p.parse("ax"));
         assertTrue(e1.getMessage().contains("expected b"));
         MyParseException e2 = assertThrowsExactly(MyParseException.class, () -> p.parse("byx"));
@@ -422,22 +401,5 @@ public class ParsercTest {
         Parser<String> p = skip(not(str("abc"))).and(str("abxyz"));
         assertEquals("abxyz", p.parse("abxyz"));
         assertThrows(ParseInternalException.class, () -> p.parse("abcde"));
-    }
-}
-
-class MyParseException extends RuntimeException {
-    private final int index;
-
-    public MyParseException(int index, String msg) {
-        super(msg);
-        this.index = index;
-    }
-
-    public MyParseException(String msg) {
-        this(0, msg);
-    }
-
-    public int getIndex() {
-        return index;
     }
 }

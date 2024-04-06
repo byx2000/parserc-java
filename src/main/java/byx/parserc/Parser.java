@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static byx.parserc.Parsers.chs;
 
@@ -23,12 +24,16 @@ public interface Parser<R> {
     ParseResult<R> parse(String s, int index);
 
     /**
-     * 解析字符串
+     * 解析字符串直到末尾
      * @param s 字符串
      * @return 解析结果
      */
     default R parse(String s) {
-        return parse(s, 0).result();
+        ParseResult<R> r = parse(s, 0);
+        if (r.index() != s.length()) {
+            throw ParseInternalException.INSTANCE;
+        }
+        return r.result();
     }
 
     /**
@@ -221,9 +226,10 @@ public interface Parser<R> {
     }
 
     /**
-     * 如果当前位置到达输入末尾，则返回null作为解析结果，否则抛出ParseException
+     * 当前解析器抛出ParseException时，抛出特定异常
+     * @param exceptionSupplier 异常生成器
      */
-    default Parser<R> end() {
-        return this.skip(Parsers.end());
+    default Parser<R> fatal(Supplier<RuntimeException> exceptionSupplier) {
+        return fatal((s, i) -> exceptionSupplier.get());
     }
 }

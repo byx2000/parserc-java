@@ -7,32 +7,32 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static byx.parserc.Parsers.*;
-import static byx.parserc.Parsers.str;
 import static org.junit.jupiter.api.Assertions.*;
 import static byx.parserc.Tokenizer.*;
 
 public class TokenizerTest {
     @Test
     public void test() {
-        String s = "var a = 123;\n" +
-                "var b = 3.14;\n" +
-                "var c = 'hello';\n" +
-                "var d = [1, 2, 3.14, 'hello'];\n" +
-                "\n" +
-                "function fib(n) {\n" +
-                "    if (n == 1 || n == 2) {\n" +
-                "        return 1;\n" +
-                "    }\n" +
-                "    return fib(n - 1) + fib(n - 2);\n" +
-                "}\n" +
-                "\n" +
-                "function map(f, m) {\n" +
-                "    return m(f());\n" +
-                "}\n" +
-                "\n" +
-                "function main() {\n" +
-                "    map(() => fib(10), a => a + 1);\n" +
-                "}";
+        String s = """
+            var a = 123;
+            var b = 3.14;
+            var c = 'hello';
+            var d = [1, 2, 3.14, 'hello'];
+
+            function fib(n) {
+                if (n == 1 || n == 2) {
+                    return 1;
+                }
+                return fib(n - 1) + fib(n - 2);
+            }
+
+            function map(f, m) {
+                return m(f());
+            }
+
+            function main() {
+                map(() => fib(10), a => a + 1);
+            }""";
         assertEquals(List.of(
                 new Token(TokenType.Identifier, "var"),
                 new Token(TokenType.Identifier, "a"),
@@ -231,33 +231,4 @@ class Tokenizer {
     }
 }
 
-class Token {
-    private final TokenType type;
-    private final String value;
-
-    public Token(TokenType type, String value) {
-        this.type = type;
-        this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Token token = (Token) o;
-        return type == token.type && Objects.equals(value, token.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(type, value);
-    }
-
-    @Override
-    public String toString() {
-        return "Token{" +
-            "type=" + type +
-            ", value='" + value + '\'' +
-            '}';
-    }
-}
+record Token(TokenType type, String value) {}
